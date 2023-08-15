@@ -86,9 +86,15 @@ saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 
 # D&C, subdomain split
 indexSubd <- balanced_clustering(STrain, totalCores)
-subsetsX <- lapply(1:totalCores, function(k) XTrain[which(indexSubd == k), ])
-subsetsY <- lapply(1:totalCores, function(k) YTrain[which(indexSubd == k)])
-subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexSubd == k), which(indexSubd == k)])
+subsetsX <- lapply(1:totalCores, function(k) { 
+  lapply(storms, function(s) XTrain[[s]][which(indexSubd == k), ])
+  })
+subsetsY <- lapply(1:totalCores, function(k) { 
+  lapply(storms, function(s) YTrain[[s]][which(indexSubd == k)])
+})
+subsetsD <- lapply(1:totalCores, function(k) { 
+  lapply(storms, function(s) DTrain[[s]][which(indexSubd == k), which(indexSubd == k)])
+})
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
@@ -107,11 +113,16 @@ saveRDS(flood_results_subdomains, paste0("results/flood_results_subdomains.RDS")
 
 
 # D&C, stratified split
-indexSubd <- balanced_clustering(STrain, totalCores)
 indexStrat <- list2Vec(partition(indexSubd, p = rep(1/nCores, totalCores)))
-subsetsX <- lapply(1:totalCores, function(k) XTrain[which(indexStrat == k), ])
-subsetsY <- lapply(1:totalCores, function(k) YTrain[which(indexStrat == k)])
-subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexStrat == k), which(indexStrat == k)])
+subsetsX <- lapply(1:totalCores, function(k) { 
+  lapply(storms, function(s) XTrain[[s]][which(indexStrat == k), ])
+})
+subsetsY <- lapply(1:totalCores, function(k) { 
+  lapply(storms, function(s) YTrain[[s]][which(indexStrat == k)])
+})
+subsetsD <- lapply(1:totalCores, function(k) { 
+  lapply(storms, function(s) DTrain[[s]][which(indexStrat == k), which(indexStrat == k)])
+})
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
