@@ -18,6 +18,8 @@ library(foreach) # For parallel computation
 library(mvtnorm)
 library(fields)
 library(MBA)
+library(anticlust) # for balanced clustering
+library(splitTools) # for stratified splitting
 
 # Read in
 load("data/flood_data.RData")
@@ -63,7 +65,8 @@ XTest <- lapply(storms, \(i) {
 STest <- as.matrix(coords[indexTest, 1:2])
 DTest <- rdist(STest)
 
-# Parallel, 2 cores at a time
+
+# Sketching
 thetaVals <- seq(0.1, 0.5, length = totalCores)
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
@@ -76,9 +79,52 @@ if (file.exists(".RData")) {
   file.remove(".RData")
 }
 gc()
+flood_results_sketching <- wasserstein(nChains = totalCores, method = "sketching")
+saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 
 
-flood_results <- wasserstein(nChains = totalCores)
-saveRDS(flood_results, paste0("results/flood_final_results.RDS"))
+
+# D&C, subdomain split
+indexSubd <- balanced_clustering(STrain, totalCores)
+subsetsX <- lapply(1:totalCores, function(k) XTrain[which(indexSubd == k), ])
+subsetsY <- lapply(1:totalCores, function(k) YTrain[which(indexSubd == k)])
+subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexSubd == k), which(indexSubd == k)])
+
+cl <- makeCluster(nCores)
+registerDoParallel(cl)
+strt <- Sys.time()
+set.seed(mySeed)
+obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% subdomains_parallel(i)  
+final.time <- Sys.time() - strt 
+stopCluster(cl)
+if (file.exists(".RData")) {
+  file.remove(".RData")
+}
+gc()
+flood_results_subdomains <- wasserstein(nChains = totalCores, method = "subdomains")
+saveRDS(flood_results_subdomains, paste0("results/flood_results_subdomains.RDS"))
+
+
+
+# D&C, stratified split
+indexSubd <- balanced_clustering(STrain, totalCores)
+indexStrat <- list2Vec(partition(indexSubd, p = rep(1/nCores, totalCores)))
+subsetsX <- lapply(1:totalCores, function(k) XTrain[which(indexStrat == k), ])
+subsetsY <- lapply(1:totalCores, function(k) YTrain[which(indexStrat == k)])
+subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexStrat == k), which(indexStrat == k)])
+
+cl <- makeCluster(nCores)
+registerDoParallel(cl)
+strt <- Sys.time()
+set.seed(mySeed)
+obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% stratified_parallel(i)  
+final.time <- Sys.time() - strt 
+stopCluster(cl)
+if (file.exists(".RData")) {
+  file.remove(".RData")
+}
+gc()
+flood_results_stratified <- wasserstein(nChains = totalCores, method = "stratified")
+saveRDS(flood_results_stratified, paste0("results/flood_results_stratified.RDS"))
 
 

@@ -1,8 +1,8 @@
 ### Wasserstein mean for multiple Markov chains (multiple distributions) 
-wasserstein <- function(nChains, alpha = 0.05) {
+wasserstein <- function(nChains, method, alpha = 0.05) {
   results <- vector("list", nChains)
   for (i in 1:nChains) {
-    path <- paste0("results/flood_rep", i, ".RDS")
+    path <- paste0("results/", method, "/flood_rep", i, ".RDS")
     results[[i]] <- readRDS(path)
   }
   wassersteinAcc <- rowMeans(sapply(results, \(x) unlist(x$acceptance)))
