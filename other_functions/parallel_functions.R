@@ -4,8 +4,8 @@ sketching_parallel <- function(i) {
   flood_results <- flood_mcmc(X = XTrain, Y = YTrain, D = DTrain,
                               nKnots = 0,
                               theta = thetaVals[i],
-                              propSD = c(0.05, 0.035),
-                              nIter = 100, nBurn = 100,
+                              propSD = c(0.04, 0.03),
+                              nIter = 2000, nBurn = 500,
                               model = "full_gp",
                               mProp = 0.01,
                               transform = TRUE)
@@ -19,8 +19,8 @@ subdomains_parallel <- function(i) {
   flood_results <- flood_mcmc(X = subsetsX[[i]], Y = subsetsY[[i]], subsetsD[[i]],
                               nKnots = 0,
                               theta = runif(1, 0.1, 0.5),
-                              propSD = c(0.05, 0.035),
-                              nIter = 100, nBurn = 100,
+                              propSD = c(0.04, 0.03),
+                              nIter = 2000, nBurn = 500,
                               model = "full_gp",
                               mProp = 0.01,
                               transform = TRUE)
@@ -34,8 +34,8 @@ stratified_parallel <- function(i) {
   flood_results <- flood_mcmc(X = subsetsX[[i]], Y = subsetsY[[i]], subsetsD[[i]],
                               nKnots = 0,
                               theta = runif(1, 0.1, 0.5),
-                              propSD = c(0.05, 0.035),
-                              nIter = 100, nBurn = 100,
+                              propSD = c(0.04, 0.03),
+                              nIter = 2000, nBurn = 500,
                               model = "full_gp",
                               mProp = 0.01,
                               transform = TRUE)

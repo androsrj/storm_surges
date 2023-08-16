@@ -17,12 +17,14 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger (Mb) max used (Mb)
-Ncells 273690 14.7     660857 35.3   451905 24.2
-Vcells 459126  3.6    8388608 64.0  1800280 13.8
+         used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells 275550 14.8     787285   42.1    350000   18.7
+Vcells 462590  3.6  192873292 1471.6 200296101 1528.2
 > 
 > # SOURCES
 > source("mcmc_functions/flood_mcmc.R") # Metropolis-Gibbs Sampler
@@ -123,10 +125,11 @@ Try help(fields) to get started.
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
+[1] TRUE
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1964934   105.0    3754252   200.5    2715267   145.1
-Vcells 2459548570 18764.9 3533919966 26961.7 2462195170 18785.1
+Ncells    1965003   105.0    3283634   175.4    3283634   175.4
+Vcells 2459548704 18764.9 3533920119 26961.7 2462195553 18785.1
 > flood_results_sketching <- wasserstein(nChains = totalCores, method = "sketching")
 > saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 > 
@@ -154,8 +157,8 @@ Vcells 2459548570 18764.9 3533919966 26961.7 2462195170 18785.1
 + }
 > gc()
              used  (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    2021388   108    3754252   200.5    2831232   151.3
-Vcells 2701653614 20612 4240783959 32354.7 2756998231 21034.3
+Ncells    2021453   108    3283634   175.4    3283634   175.4
+Vcells 2701653743 20612 4240784142 32354.7 2756998361 21034.3
 > flood_results_subdomains <- wasserstein(nChains = totalCores, method = "subdomains")
 > saveRDS(flood_results_subdomains, paste0("results/flood_results_subdomains.RDS"))
 > 
@@ -183,13 +186,13 @@ Vcells 2701653614 20612 4240783959 32354.7 2756998231 21034.3
 + }
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    2027561   108.3    3754252   200.5    2831232   151.3
-Vcells 2701728507 20612.6 4240783959 32354.7 2995849060 22856.6
+Ncells    2027622   108.3    3283634   175.4    3283634   175.4
+Vcells 2701728631 20612.6 4240784142 32354.7 2995849211 22856.6
 > flood_results_stratified <- wasserstein(nChains = totalCores, method = "stratified")
 > saveRDS(flood_results_stratified, paste0("results/flood_results_stratified.RDS"))
 > 
 > 
 > 
 > proc.time()
-    user   system  elapsed 
-  75.277   24.518 5765.838 
+     user    system   elapsed 
+   80.404    27.895 59882.068 
