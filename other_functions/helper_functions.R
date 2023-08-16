@@ -10,22 +10,22 @@ wasserstein <- function(nChains, method, alpha = 0.05) {
   wassersteinLower <- rowMeans(sapply(results, \(x) unlist(x$credLower)))
   wassersteinUpper <- rowMeans(sapply(results, \(x) unlist(x$credUpper)))
   
-  #predsList <- lapply(results, \(x) x$preds)
-  #predictions <- Reduce("+", predsList) / length(predsList)
+  predsList <- lapply(results, \(x) x$preds)
+  predictions <- Reduce("+", predsList) / length(predsList)
   
   wassersteinResults <- list(acc = wassersteinAcc, 
                              means = wassersteinMeans, 
                              lower = wassersteinLower,
                              upper = wassersteinUpper, 
-                             #predictions = predictions,
+                             predictions = predictions,
                              time = final.time)
 }
 
 
 # Calculates the base of the covariance matrix for likelihood function
-baseVariance <- function(theta, phi) {
+baseVariance <- function(theta, phi, D) {
   
-  C <- exp(- theta * DTrain)
+  C <- exp(- theta * D)
   B <- tcrossprod(phi %*% C, phi)
   
   return(B)

@@ -92,9 +92,7 @@ subsetsX <- lapply(1:totalCores, function(k) {
 subsetsY <- lapply(1:totalCores, function(k) { 
   lapply(storms, function(s) YTrain[[s]][which(indexSubd == k)])
 })
-subsetsD <- lapply(1:totalCores, function(k) { 
-  lapply(storms, function(s) DTrain[[s]][which(indexSubd == k), which(indexSubd == k)])
-})
+subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexSubd == k), which(indexSubd == k)])
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
@@ -120,9 +118,7 @@ subsetsX <- lapply(1:totalCores, function(k) {
 subsetsY <- lapply(1:totalCores, function(k) { 
   lapply(storms, function(s) YTrain[[s]][which(indexStrat == k)])
 })
-subsetsD <- lapply(1:totalCores, function(k) { 
-  lapply(storms, function(s) DTrain[[s]][which(indexStrat == k), which(indexStrat == k)])
-})
+subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexStrat == k), which(indexStrat == k)])
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)

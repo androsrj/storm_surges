@@ -52,7 +52,7 @@ flood_mcmc <- function(X, Y, D,
   beta[ , 1] <- rep(0, p)
   
   # Base of covariance matrix for updating sigma2 (only need to compute once)
-  B <<- baseVariance(theta, phi = phi)
+  B <<- baseVariance(theta, phi = phi, D = D)
   Sigma <<- exp(trSigma2[1]) * B + exp(trTau2[1]) * diag(m)
     
   # Initial predictions for storm 1 (and non-transformed covariance matrix)
