@@ -22,15 +22,15 @@ indexTest <- indices[[2]]
 trueY <- colMeans(out)[indexTest]
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], trueY), no.X=100, no.Y=100, extend=T)$xyz.est
 pdf("figures/storm1_truth.pdf")
-par(cex = 1.3)
-image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev=TRUE), legend.lab = "Water Level (meters)")
+par(cex = 1.5)
+image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev=TRUE), legend.lab = "Water Level (meters)", legend.cex = 2)
 dev.off()
 
 # Surface plot for estimated water level of storm 1 at testing data points (sketching) 
 flood_results_sketching <- readRDS("results/flood_results_sketching.RDS")
 estY <- flood_results_sketching$predictions[2, ]
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estY), no.X=100, no.Y=100, extend=T)$xyz.est
-par(cex = 1.3)
+par(cex = 1.5)
 pdf("figures/storm1_sketching.pdf")
 image(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev = TRUE))
 dev.off()
@@ -40,7 +40,7 @@ dev.off()
 flood_results_subdomains <- readRDS("results/flood_results_subdomains.RDS")
 estY <- flood_results_subdomains$predictions[2, ]
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estY), no.X=100, no.Y=100, extend=T)$xyz.est
-par(cex = 1.3)
+par(cex = 1.5)
 pdf("figures/storm1_subdomains.pdf")
 image(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev = TRUE))
 dev.off()
@@ -50,7 +50,7 @@ dev.off()
 flood_results_stratified <- readRDS("results/flood_results_stratified.RDS")
 estY <- flood_results_stratified$predictions[2, ]
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estY), no.X=100, no.Y=100, extend=T)$xyz.est
-par(cex = 1.3)
+par(cex = 1.5)
 pdf("figures/storm1_stratified.pdf")
 image(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev = TRUE))
 dev.off()
