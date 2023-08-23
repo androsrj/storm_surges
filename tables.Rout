@@ -1,0 +1,46 @@
+
+R version 4.2.0 (2022-04-22) -- "Vigorous Calisthenics"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> sketching <- readRDS("results/flood_results_sketching.RDS")
+> subdomains <- readRDS("results/flood_results_subdomains.RDS")
+> stratified <- readRDS("results/flood_results_stratified.RDS")
+> data_split <- readRDS("results/data_split.RDS")
+> indexTest <- data_split[[2]]
+> load("data/flood_data.RData")
+> trueTest <- out[1, indexTest]
+> 
+> # Length
+> mean(sketching$predictions[3,] - sketching$predictions[1,])
+[1] 23.86387
+> mean(subdomains$predictions[3,] - subdomains$predictions[1,])
+[1] 11.06315
+> mean(stratified$predictions[3,] - stratified$predictions[1,])
+[1] 11.03696
+> 
+> # Coverage
+> mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
+[1] 1
+> mean(subdomains$predictions[3,] > trueTest & subdomains$predictions[1,] < trueTest)
+[1] 1
+> mean(stratified$predictions[3,] > trueTest & stratified$predictions[1,] < trueTest)
+[1] 1
+> 
+> proc.time()
+   user  system elapsed 
+  5.898   2.753   8.622 

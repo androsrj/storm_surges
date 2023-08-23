@@ -128,10 +128,8 @@ flood_mcmc <- function(X, Y, D,
     
     ### Posterior predictive sampling for storm 1 ###
     # Computationally expensive - only compute every 100th iteration
-    if (i %% 10 == 0) {
-      SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
-      YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[1]] %*% beta[ , i]), sigma = SigmaTest))
-    }
+    SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
+    YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[1]] %*% beta[ , i]), sigma = SigmaTest))
   }
   
   # Acceptance rates (for Metropolis-sampled parameters)
@@ -140,12 +138,12 @@ flood_mcmc <- function(X, Y, D,
   
   # Remove burn-in and perform thinning
   index <- seq(nBurn + 1, nIter, by = nThin)
-  indexY <- seq(nBurn + 10, nIter, by = 10)
+  #indexY <- seq(nBurn + 10, nIter, by = 10)
   trSigma2 <- trSigma2[index]
   trTau2 <- trTau2[index]
   #trTheta <- trTheta[index]
   beta <- beta[ , index]
-  YPreds <- YPreds[ , indexY]
+  YPreds <- YPreds[ , index]
   nSamples <- length(index)
   
   # Back-transform
