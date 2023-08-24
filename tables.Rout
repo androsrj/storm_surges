@@ -27,11 +27,11 @@ Type 'q()' to quit R.
 > 
 > # Length
 > mean(sketching$predictions[3,] - sketching$predictions[1,])
-[1] 23.86387
+[1] 23.48391
 > mean(subdomains$predictions[3,] - subdomains$predictions[1,])
-[1] 11.06315
+[1] 15.72004
 > mean(stratified$predictions[3,] - stratified$predictions[1,])
-[1] 11.03696
+[1] 13.76054
 > 
 > # Coverage
 > mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
@@ -41,6 +41,16 @@ Type 'q()' to quit R.
 > mean(stratified$predictions[3,] > trueTest & stratified$predictions[1,] < trueTest)
 [1] 1
 > 
+> # MSPE
+> mean((sketching$predictions[2,] - trueTest)^2)
+[1] 1.369335
+> mean((subdomains$predictions[2,] - trueTest)^2)
+[1] 1.136488
+> mean((stratified$predictions[2,] - trueTest)^2)
+[1] 1.200877
+> 
+> 
+> 
 > proc.time()
    user  system elapsed 
-  5.898   2.753   8.622 
+  6.589   0.800   7.335 

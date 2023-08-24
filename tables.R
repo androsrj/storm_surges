@@ -15,3 +15,10 @@ mean(stratified$predictions[3,] - stratified$predictions[1,])
 mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
 mean(subdomains$predictions[3,] > trueTest & subdomains$predictions[1,] < trueTest)
 mean(stratified$predictions[3,] > trueTest & stratified$predictions[1,] < trueTest)
+
+# MSPE
+mean((sketching$predictions[2,] - trueTest)^2)
+mean((subdomains$predictions[2,] - trueTest)^2)
+mean((stratified$predictions[2,] - trueTest)^2)
+
+
