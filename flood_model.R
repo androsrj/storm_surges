@@ -67,7 +67,7 @@ DTest <- rdist(STest)
 
 
 # Sketching
-thetaVals <- seq(0.1, 0.5, length = totalCores)
+thetaVals <- seq(0.5, 2, length = totalCores)
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt <- Sys.time()
