@@ -1,0 +1,30 @@
+sketching <- readRDS("results/flood_results_sketching.RDS")
+subdomains <- readRDS("results/flood_results_subdomains.RDS")
+stratified <- readRDS("results/flood_results_stratified.RDS")
+data_split <- readRDS("results/data_split.RDS")
+indexTest <- data_split[[2]]
+load("data/flood_data.RData")
+trueTest <- out[1, indexTest]
+
+# Parameter estimates
+sigma2 <- c(sketching$means['sigma2'],
+	    subdomains$means['sigma2'],
+	    stratified$means['sigma2'])
+tau2
+
+# Length
+mean(sketching$predictions[3,] - sketching$predictions[1,])
+mean(subdomains$predictions[3,] - subdomains$predictions[1,])
+mean(stratified$predictions[3,] - stratified$predictions[1,])
+
+# Coverage
+mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
+mean(subdomains$predictions[3,] > trueTest & subdomains$predictions[1,] < trueTest)
+mean(stratified$predictions[3,] > trueTest & stratified$predictions[1,] < trueTest)
+
+# MSPE
+mean((sketching$predictions[2,] - trueTest)^2)
+mean((subdomains$predictions[2,] - trueTest)^2)
+mean((stratified$predictions[2,] - trueTest)^2)
+
+

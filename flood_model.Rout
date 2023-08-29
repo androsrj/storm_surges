@@ -17,12 +17,14 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger (Mb) max used (Mb)
-Ncells 273690 14.7     660857 35.3   451905 24.2
-Vcells 459126  3.6    8388608 64.0  1800280 13.8
+         used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells 275544 14.8     787268   42.1    350000   18.7
+Vcells 462583  3.6  192847031 1471.4 200283407 1528.1
 > 
 > # SOURCES
 > source("mcmc_functions/flood_mcmc.R") # Metropolis-Gibbs Sampler
@@ -112,7 +114,7 @@ Try help(fields) to get started.
 > 
 > 
 > # Sketching
-> thetaVals <- seq(0.5, 2, length = totalCores)
+> thetaVals <- seq(10, 100, length = totalCores)
 > cl <- makeCluster(nCores)
 > registerDoParallel(cl)
 > strt <- Sys.time()
@@ -123,10 +125,11 @@ Try help(fields) to get started.
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
+[1] TRUE
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1964938   105.0    3754260   200.5    2715204   145.1
-Vcells 2459548572 18764.9 3533919969 26961.7 2462195200 18785.1
+Ncells    1965004   105.0    3283565   175.4    3283565   175.4
+Vcells 2459548700 18764.9 3533920104 26961.7 2462195611 18785.1
 > flood_results_sketching <- wasserstein(nChains = totalCores, method = "sketching")
 > saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 > 
@@ -154,8 +157,8 @@ Vcells 2459548572 18764.9 3533919969 26961.7 2462195200 18785.1
 + }
 > gc()
              used  (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    2021392   108    3754260   200.5    2831519   151.3
-Vcells 2701653616 20612 4240783962 32354.7 2761970271 21072.2
+Ncells    2021458   108    3283565   175.4    3283565   175.4
+Vcells 2701653744 20612 4240784124 32354.7 2761970371 21072.2
 > flood_results_subdomains <- wasserstein(nChains = totalCores, method = "subdomains")
 > saveRDS(flood_results_subdomains, paste0("results/flood_results_subdomains.RDS"))
 > 
@@ -183,8 +186,8 @@ Vcells 2701653616 20612 4240783962 32354.7 2761970271 21072.2
 + }
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    2027564   108.3    3754260   200.5    2831519   151.3
-Vcells 2701728508 20612.6 4240783962 32354.7 3000821126 22894.5
+Ncells    2027628   108.3    3283565   175.4    3283565   175.4
+Vcells 2701728633 20612.6 4240784124 32354.7 3000821250 22894.5
 > flood_results_stratified <- wasserstein(nChains = totalCores, method = "stratified")
 > saveRDS(flood_results_stratified, paste0("results/flood_results_stratified.RDS"))
 > 
@@ -192,4 +195,8 @@ Vcells 2701728508 20612.6 4240783962 32354.7 3000821126 22894.5
 > 
 > proc.time()
      user    system   elapsed 
-   75.009    28.242 58732.579 
+   87.584    27.158 58110.607 
+Error in save(list = names(.GlobalEnv), file = outfile, version = version,  : 
+  error writing to connection
+Calls: sys.save.image -> save.image -> save
+Execution halted
