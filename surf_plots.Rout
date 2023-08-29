@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > library(MBA)
 > library(fields)
 Loading required package: spam
@@ -106,4 +108,4 @@ pdf
 > 
 > proc.time()
    user  system elapsed 
-  7.324   0.908   8.614 
+ 13.166   6.377  19.816 
