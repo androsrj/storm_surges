@@ -1,12 +1,12 @@
 # SOURCES
-source("mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
-source("mcmc_functions/priors.R")
-source("mcmc_functions/jacobians.R")
-source("mcmc_functions/likelihood.R")
-source("mcmc_functions/posterior.R")
-source("other_functions/sparse.R") # For sparse GP
-source("other_functions/parallel_functions.R") # Parallel wrapper functions
-source("other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
+source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
+source("../mcmc_functions/priors.R")
+source("../mcmc_functions/jacobians.R")
+source("../mcmc_functions/likelihood.R")
+source("../mcmc_functions/posterior.R")
+source("../other_functions/sparse.R") # For sparse GP
+source("../other_functions/parallel_functions.R") # Parallel wrapper functions
+source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
 
 # Libraries
 library(anticlust) # for balanced clustering

@@ -1,9 +1,10 @@
 library(fields)
 
 # Function to simulate spatial data
-spatialData <- function(n, X = NULL, S = NULL, range = c(0, 10), dims = 2, 
-                    sigma2 = 2, tau2 = 0.2, theta = 3, beta = c(2, -1),
-                    covariance = "exponential") {
+spatialData <- function(n, X, Z, 
+                        sigma2, tau2, theta, beta, gamma,
+                        S = NULL, range = c(0, 10), dims = 2, 
+                        covariance = "exponential") {
   
   # Sample the locations and put them into an n-by-dims matrix
   # Unless the coordinates are pre-supplied
@@ -28,20 +29,16 @@ spatialData <- function(n, X = NULL, S = NULL, range = c(0, 10), dims = 2,
   # Sample W
   W <- t(rmvnorm(1, sigma = C))
   
-  # If X is not supplied, set it to a matrix containing a column of ones (intercept) 
-  # and one standard normal predictor
-  if (is.null(X)) {
-    Xint <- rep(1, n)
-    Xpred <- rnorm(n)
-    X <- matrix(Xint, Xpred, nrow = n, ncol = 2)
-  }
-  
   # Sample epsilon
   eps <- rnorm(n, 0, sqrt(tau2))
   
   # Generate Y
-  Y <- X %*% beta + W + eps
+  nSubj <- length(Z)
+  n <- nrow(X)
+  #Y <- lapply(1:nSubj, \(i) X %*% beta + rep(Z[i], n) * gamma + W + eps)
+  X <- lapply(1:nSubj, \(i) cbind(rep(Z[i], n), X))
+  Y <- lapply(1:nSubj, \(i) X[[i]] %*% c(gamma, beta) + W + eps)
   
   # Return data
-  return(list(X = X, Y = as.vector(Y), W = as.vector(W), D = D, S = S))
+  return(list(X = X, Y = Y, W = as.vector(W), D = D, S = S))
 }
