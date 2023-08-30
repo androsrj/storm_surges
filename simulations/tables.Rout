@@ -1,0 +1,236 @@
+
+R version 4.2.0 (2022-04-22) -- "Vigorous Calisthenics"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # Tables for paper
+> DC_full_gp <- readRDS("../../code/results/d_and_c/full_gp/final_results.RDS")
+> DC_mpp <- readRDS("../../code/results/d_and_c/mpp/final_results.RDS")
+> DC_sparse_gp <- readRDS("../../code/results/d_and_c/sparse_gp/final_results.RDS")
+> sketch_full_gp <- readRDS("../../code/results/sketching/full_gp/final_results.RDS")
+> sketch_mpp <- readRDS("../../code/results/sketching/mpp/final_results.RDS")
+> sketch_sparse_gp <- readRDS("../../code/results/sketching/sparse_gp/final_results.RDS")
+> load("../../code/data/test.RData")
+> 
+> # Check acceptance rates first
+> sapply(DC_full_gp, \(x) x$acc)
+            [,1]      [,2]      [,3]      [,4]
+sigma2 0.2465833 0.2405667 0.2217167 0.2085333
+tau2   0.1902000 0.1861333 0.2870000 0.3352333
+> sapply(DC_mpp, \(x) x$acc)
+            [,1]      [,2]      [,3]      [,4]
+sigma2 0.2787500 0.2723500 0.2386333 0.2676667
+tau2   0.2966833 0.3274333 0.3162833 0.3039333
+> sapply(DC_sparse_gp, \(x) x$acc)
+            [,1]      [,2]      [,3]      [,4]
+sigma2 0.2434000 0.2388500 0.2230167 0.2149667
+tau2   0.1994167 0.1985333 0.2683167 0.3187000
+> sketch_full_gp$acc
+   sigma2      tau2 
+0.2605833 0.1635833 
+> sketch_mpp$acc
+   sigma2      tau2 
+0.2419667 0.2419833 
+> sketch_sparse_gp$acc
+   sigma2      tau2 
+0.2702000 0.1441333 
+> 
+> model <- rep(c("Full_GP", "MPP", "Sparse_GP"), each = 5)
+> splitType <- rep(c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"), 3)
+> 
+> #######################################################################
+> 
+> sigma2Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[1]), 
++                        sketch_full_gp$means[1],
++                        sapply(DC_mpp, \(x) x$means[1]),
++                        sketch_mpp$means[1],
++                        sapply(DC_sparse_gp, \(x) x$means[1]),
++                        sketch_sparse_gp$means[1]))
+> 
+> sigma2Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[1]), 
++                         sketch_full_gp$lower[1],
++                         sapply(DC_mpp, \(x) x$lower[1]),
++                         sketch_mpp$lower[1],
++                         sapply(DC_sparse_gp, \(x) x$lower[1]),
++                         sketch_sparse_gp$lower[1]))
+> 
+> sigma2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[1]), 
++                         sketch_full_gp$upper[1],
++                         sapply(DC_mpp, \(x) x$upper[1]),
++                         sketch_mpp$upper[1],
++                         sapply(DC_sparse_gp, \(x) x$upper[1]),
++                         sketch_sparse_gp$upper[1]))
+> 
+> #######################################################################
+> 
+> tau2Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[2]), 
++                      sketch_full_gp$means[2],
++                      sapply(DC_mpp, \(x) x$means[2]),
++                      sketch_mpp$means[2],
++                      sapply(DC_sparse_gp, \(x) x$means[2]),
++                      sketch_sparse_gp$means[2]))
+> 
+> tau2Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[2]), 
++                       sketch_full_gp$lower[2],
++                       sapply(DC_mpp, \(x) x$lower[2]),
++                       sketch_mpp$lower[2],
++                       sapply(DC_sparse_gp, \(x) x$lower[2]),
++                       sketch_sparse_gp$lower[2]))
+> 
+> tau2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[2]), 
++                       sketch_full_gp$upper[2],
++                       sapply(DC_mpp, \(x) x$upper[2]),
++                       sketch_mpp$upper[2],
++                       sapply(DC_sparse_gp, \(x) x$upper[2]),
++                       sketch_sparse_gp$upper[2]))
+> 
+> #######################################################################
+> 
+> beta1Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[3]), 
++                       sketch_full_gp$means[3],
++                       sapply(DC_mpp, \(x) x$means[3]),
++                       sketch_mpp$means[3],
++                       sapply(DC_sparse_gp, \(x) x$means[3]),
++                       sketch_sparse_gp$means[3]))
+> 
+> beta1Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[3]), 
++                        sketch_full_gp$lower[3],
++                        sapply(DC_mpp, \(x) x$lower[3]),
++                        sketch_mpp$lower[3],
++                        sapply(DC_sparse_gp, \(x) x$lower[3]),
++                        sketch_sparse_gp$lower[3]))
+> 
+> beta1Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[3]), 
++                        sketch_full_gp$upper[3],
++                        sapply(DC_mpp, \(x) x$upper[3]),
++                        sketch_mpp$upper[3],
++                        sapply(DC_sparse_gp, \(x) x$upper[3]),
++                        sketch_sparse_gp$upper[3]))
+> 
+> #######################################################################
+> 
+> beta2Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[4]), 
++                       sketch_full_gp$means[4],
++                       sapply(DC_mpp, \(x) x$means[4]),
++                       sketch_mpp$means[4],
++                       sapply(DC_sparse_gp, \(x) x$means[4]),
++                       sketch_sparse_gp$means[4]))
+> 
+> beta2Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[4]), 
++                        sketch_full_gp$lower[4],
++                        sapply(DC_mpp, \(x) x$lower[4]),
++                        sketch_mpp$lower[4],
++                        sapply(DC_sparse_gp, \(x) x$lower[4]),
++                        sketch_sparse_gp$lower[4]))
+> 
+> beta2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[4]), 
++                        sketch_full_gp$upper[4],
++                        sapply(DC_mpp, \(x) x$upper[4]),
++                        sketch_mpp$upper[4],
++                        sapply(DC_sparse_gp, \(x) x$upper[4]),
++                        sketch_sparse_gp$upper[4]))
+> 
+> #######################################################################
+> 
+> lowerPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[1, ])), 
++                     sketch_full_gp$predictions[1, ],
++                     t(sapply(DC_mpp, \(x) x$predictions[1, ])), 
++                     sketch_mpp$predictions[1, ],
++                     t(sapply(DC_sparse_gp, \(x) x$predictions[1, ])),
++                     sketch_sparse_gp$predictions[1, ])
+> 
+> upperPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[3, ])), 
++                     sketch_full_gp$predictions[3, ],
++                     t(sapply(DC_mpp, \(x) x$predictions[3, ])), 
++                     sketch_mpp$predictions[3, ],
++                     t(sapply(DC_sparse_gp, \(x) x$predictions[3, ])),
++                     sketch_sparse_gp$predictions[3, ])
+> 
+> pointPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[2, ])), 
++                     sketch_full_gp$predictions[2, ],
++                     t(sapply(DC_mpp, \(x) x$predictions[2, ])), 
++                     sketch_mpp$predictions[2, ],
++                     t(sapply(DC_sparse_gp, \(x) x$predictions[2, ])),
++                     sketch_sparse_gp$predictions[2, ])
+> 
+> MSPE <- apply(pointPreds, 1, \(x) mean((x - test$Y)^2))
+> cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y & upperPreds[i, ] >= test$Y)
+> coverage <- apply(cvg_ind, 2, mean)
+> length <- apply(upperPreds - lowerPreds, 1, mean)
+> 
+> df <- data.frame(model, splitType,
++                  sigma2Mean, sigma2Lower, sigma2Upper,
++                  tau2Mean, tau2Lower, tau2Upper,
++                  beta1Mean, beta1Lower, beta1Upper,
++                  beta2Mean, beta2Lower, beta2Upper,
++                  MSPE, coverage, length)
+> 
+> df
+       model  splitType sigma2Mean sigma2Lower sigma2Upper  tau2Mean tau2Lower
+1    Full_GP Subdomains   2.096945   1.9849942    2.217075 0.1843246 0.1662837
+2    Full_GP Stratified   2.019048   1.9245128    2.121813 0.2053944 0.1862992
+3    Full_GP Multiplets   1.902551   1.8065601    1.999293 0.2552696 0.2211642
+4    Full_GP     Random   1.911293   1.8203818    2.004430 0.1823903 0.1514223
+5    Full_GP  Sketching   2.215555   2.1060166    2.333019 0.1955086 0.1630603
+6        MPP Subdomains   1.347531   0.9427908    1.722573 0.7125899 0.3458671
+7        MPP Stratified   1.411028   1.0546021    1.801292 0.6839938 0.3052590
+8        MPP Multiplets   1.576787   1.0777949    1.868213 0.5305648 0.2462895
+9        MPP     Random   1.440542   1.0522949    1.873091 0.6636783 0.2408227
+10       MPP  Sketching   1.913175   1.7961580    2.016580 0.2001545 0.1248996
+11 Sparse_GP Subdomains   1.869890   1.7740195    1.972617 0.1756263 0.1570408
+12 Sparse_GP Stratified   1.903618   1.8115091    1.998232 0.1962688 0.1773293
+13 Sparse_GP Multiplets   1.917541   1.8165122    2.020079 0.2652119 0.2276734
+14 Sparse_GP     Random   1.900748   1.8099585    1.993214 0.2057227 0.1734340
+15 Sparse_GP  Sketching   2.135897   2.0173816    2.257880 0.2381087 0.2024982
+   tau2Upper beta1Mean beta1Lower beta1Upper  beta2Mean beta2Lower beta2Upper
+1  0.2023394  1.679594   1.377816   1.978466 -0.9849550 -0.9996669 -0.9702341
+2  0.2248277  1.865491   1.763422   1.967716 -0.9796157 -0.9953203 -0.9637965
+3  0.2926535  1.898476   1.829129   1.968631 -0.9754754 -0.9959363 -0.9551226
+4  0.2187223  1.903649   1.837880   1.968347 -0.9838146 -1.0037530 -0.9634939
+5  0.2302375  1.928395   1.837608   2.019884 -0.9922524 -1.0136336 -0.9707777
+6  1.1163631  1.873568   1.827357   1.919676 -0.9918904 -1.0200036 -0.9640129
+7  1.0359449  1.918527   1.887157   1.950349 -0.9901683 -1.0183893 -0.9623054
+8  1.0277728  1.924259   1.894521   1.954794 -0.9901499 -1.0181317 -0.9618766
+9  1.0496385  1.927296   1.897716   1.957174 -0.9926340 -1.0208206 -0.9642558
+10 0.3013208  1.921771   1.890236   1.952955 -0.9576766 -0.9864026 -0.9292713
+11 0.1938546  1.694504   1.428935   1.958993 -0.9848799 -0.9997439 -0.9703909
+12 0.2158974  1.864296   1.768160   1.959756 -0.9805339 -0.9962840 -0.9648002
+13 0.3045745  1.890800   1.819586   1.961220 -0.9755786 -0.9960135 -0.9550450
+14 0.2407688  1.898248   1.830624   1.966947 -0.9826494 -1.0027961 -0.9625756
+15 0.2771643  1.946152   1.857609   2.034767 -0.9864914 -1.0079177 -0.9649859
+       MSPE coverage   length
+1  2.472614    0.940 5.932425
+2  2.337633    0.939 5.822549
+3  2.319015    0.939 5.746264
+4  2.317448    0.930 5.659855
+5  2.306408    0.948 6.046532
+6  2.335139    0.928 5.606363
+7  2.310756    0.931 5.658889
+8  2.310324    0.933 5.682769
+9  2.306295    0.932 5.674171
+10 2.311812    0.933 5.688983
+11 2.457193    0.927 5.627589
+12 2.339885    0.934 5.666617
+13 2.323868    0.939 5.777942
+14 2.320291    0.932 5.680677
+15 2.304628    0.947 5.995712
+> 
+> proc.time()
+   user  system elapsed 
+  0.344   0.405   0.736 

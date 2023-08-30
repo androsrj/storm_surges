@@ -1,0 +1,81 @@
+
+R version 4.2.0 (2022-04-22) -- "Vigorous Calisthenics"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> source("other_functions/spatial_data.R")
+Loading required package: spam
+Spam version 2.9-1 (2022-08-07) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+Loading required package: viridis
+Loading required package: viridisLite
+
+Try help(fields) to get started.
+> mySeed <- 123
+> 
+> # Sample sizes
+> nTrain <- 10000
+> nKnots <- 500
+> nTest <- 1000
+> n <- nTrain + nKnots
+> 
+> # True parameter values
+> trueSigma2 <- 2
+> trueTau2 <- 0.2
+> trueTheta <- 3
+> trueBeta <- c(2, -1)
+> p <- length(trueBeta)
+> 
+> # Generate training data
+> set.seed(mySeed)
+> X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+> X[1:nTrain, ] <- X[order(X[1:nTrain, 1]), ]
+> train <- spatialData(n = n, 
++                      X = X, 
++                      sigma2 = trueSigma2, 
++                      tau2 = trueTau2, 
++                      theta = trueTheta, 
++                      beta = trueBeta)
+> save(train, file = "data/train.RData")
+> 
+> # Generate testing data
+> set.seed(mySeed)
+> X <- matrix(rnorm(nTest * p), nrow = nTest, ncol = p)
+> X <- X[order(X[ , 1]), ]
+> test <- spatialData(n = nTest, 
++                     X = X, 
++                     sigma2 = trueSigma2, 
++                     tau2 = trueTau2, 
++                     theta = trueTheta, 
++                     beta = trueBeta)
+> save(test, file = "data/test.RData")
+> 
+> proc.time()
+   user  system elapsed 
+ 77.901   3.026  82.481 

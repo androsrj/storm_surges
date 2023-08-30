@@ -3,7 +3,7 @@ rm(list = ls())
 gc()
 
 # SOURCES
-source("mcmc_functions/flood_mcmc.R") # Metropolis-Gibbs Sampler
+source("mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
 source("mcmc_functions/priors.R")
 source("mcmc_functions/jacobians.R")
 source("mcmc_functions/likelihood.R")

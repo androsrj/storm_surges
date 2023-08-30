@@ -1,48 +1,33 @@
 ### FINAL MCMC SKETCHING FUNCTION ###
 # Priors, Jacobians, likelihood, and posterior must already be sourced
 
-mcmc <- function(X, Y, D,
-                 nKnots, theta,
-                 model = c("mpp", "full_gp", "sparse_gpp")[1],
-                 propSD = c(0.2, 0.2, 0.5), 
-                 nIter = 10000, nBurn = 1000, nThin = 2,
-                 mProp = 0.1, transform = TRUE) {
+flood_mcmc <- function(X, Y, D,
+                       nKnots, theta,
+                       model = c("mpp", "full_gp", "sparse_gpp")[1],
+                       propSD = c(0.1, 0.1), 
+                       nIter = 1000, nBurn = 100, nThin = 2,
+                       mProp = 0.1, transform = TRUE) {
   
   # Save model type and theta globally
   model <<- model
   theta <<- theta
   
   # Dimensions
-  nObs <- nrow(X)
+  nObs <- nrow(X[[1]])
   nTrain <- nObs - nKnots
-  p <- ncol(X)
-  
-  # Separate training from knot data
-  XTrain <- X[1:nTrain, ]
-  YTrain <- Y[1:nTrain]
-  DTrain <<- D[1:nTrain, 1:nTrain]
-  
-  # Extract knot data (for MPP only)
-  if (model == "mpp") {
-    XKnot <- X[(nTrain + 1):nObs, ]
-    YKnot <- Y[(nTrain + 1):nObs]
-    DKnot <<- D[(nTrain + 1):nObs, (nTrain + 1):nObs]
-    DCov <<- D[1:nTrain, (nTrain + 1):nObs]
-  }
+  p <- ncol(X[[1]])
   
   # Generate phi and compress data, if desired
   if (transform == TRUE) {
     m <<- round(mProp * nTrain)
     phi <<- matrix(rnorm(m * nTrain, 0, 1 / sqrt(nTrain)), nrow = m, ncol = nTrain)
-    newY <<- phi %*% YTrain
-    newX <<- phi %*% XTrain
-    vecNewY <<- as.vector(newY)
+    newY <<- lapply(Y, \(y) phi %*% y) 
+    newX <<- lapply(X, \(x) phi %*% x) 
   } else {
     m <<- nTrain
     phi <<- diag(m)
-    newY <<- YTrain
-    newX <<- XTrain
-    vecNewY <<- as.vector(newY)
+    newY <<- Y
+    newX <<- X
   }
   
   # MCMC chain properties
@@ -67,20 +52,19 @@ mcmc <- function(X, Y, D,
   beta[ , 1] <- rep(0, p)
   
   # Base of covariance matrix for updating sigma2 (only need to compute once)
-  B <<- baseVariance(theta, phi = phi)
+  B <<- baseVariance(theta, phi = phi, D = D)
   Sigma <<- exp(trSigma2[1]) * B + exp(trTau2[1]) * diag(m)
-  
-  # Initial state of covariance matrix (testing data, no transformation)
-  BTest <<- exp(- theta * test$D) # Base (computed only once)
+    
+  # Initial predictions for storm 1 (and non-transformed covariance matrix)
+  BTest <<- exp(-theta * DTest)
   SigmaTest <<- exp(trSigma2[1]) * BTest + exp(trTau2[1]) * diag(nTest)
-  
-  # Initial predictions
   YPreds <- matrix(0, nrow = nTest, ncol = nIter) 
-  YPreds[ , 1] <- t(rmvnorm(1, mean = as.vector(test$X %*% beta[ , 1]),
-                            sigma = SigmaTest))
+  YPreds[ , 1] <- t(rmvnorm(1, mean = as.vector(XTest[[1]] %*% beta[ , 1]), sigma = SigmaTest))
   
   # Run Gibbs/Metropolis for one chain
   for (i in 2:nIter) {
+
+    cat(paste0("Beginning iteration ", i, ".\n"))
     
     ### Metropolis update (sigma2) ###
     
@@ -133,15 +117,21 @@ mcmc <- function(X, Y, D,
     ### Gibbs update (beta) ###
     
     SigmaInv <- solve(Sigma)
-    SigmaBeta <- (n / m) * t(newX) %*% SigmaInv %*% newX + diag(p)
+    #SigmaBeta <- (n / m) * t(newX) %*% SigmaInv %*% newX + diag(p)
+    SigmaBetaList <- lapply(newX, \(x) t(x) %*% SigmaInv %*% x)
+    SigmaBeta <- (n / m) * (Reduce("+", SigmaBetaList) + diag(p))
     SigmaBetaInv <- solve(SigmaBeta)
-    meanBeta <- (n / m) * SigmaBetaInv %*% t(newX) %*% SigmaInv %*% newY
+    #meanBeta <- (n / m) * SigmaBetaInv %*% t(newX) %*% SigmaInv %*% newY
+    meanBetaList <- lapply(storms, \(i) t(newX[[i]]) %*% SigmaInv %*% newY[[i]])
+    meanBeta <- (n / m) * SigmaBetaInv %*% Reduce("+", meanBetaList)
     beta[ , i] <- t(rmvnorm(1, meanBeta, SigmaBetaInv))
     
-    ### Posterior predictive sampling for test data ###
-    SigmaTest <<- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
-    YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(test$X %*% beta[ , i]),
-                              sigma = SigmaTest))
+    ### Posterior predictive sampling for storm 1 ###
+    # Computationally expensive - only compute every 10th iteration
+    if (i %% 10 == 0) {
+      SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
+      YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[1]] %*% beta[ , i]), sigma = SigmaTest))
+    }
   }
   
   # Acceptance rates (for Metropolis-sampled parameters)
@@ -150,11 +140,12 @@ mcmc <- function(X, Y, D,
   
   # Remove burn-in and perform thinning
   index <- seq(nBurn + 1, nIter, by = nThin)
+  indexY <- seq(nBurn + 10, nIter, by = 10)
   trSigma2 <- trSigma2[index]
   trTau2 <- trTau2[index]
   #trTheta <- trTheta[index]
   beta <- beta[ , index]
-  YPreds <- YPreds[ , index]
+  YPreds <- YPreds[ , indexY]
   nSamples <- length(index)
   
   # Back-transform
@@ -163,14 +154,14 @@ mcmc <- function(X, Y, D,
   #theta <- fInv(trTheta)
   
   # Trace plots
-  pdf(paste0("../paper/figures/trace_plots/trace_plots_", model, ".pdf"))
-  plot(1:nSamples, sigma2, type = 'l', ylab = "Sigma2", main = "")
-  plot(1:nSamples, tau2, type = 'l', ylab = "Tau2", main = "")
-  #plot(1:nSamples, theta, type = 'l', ylab = "Trace Plot for theta")
-  plot(1:nSamples, beta[1, ], type = 'l', ylab = "Beta_1", main = "")
-  plot(1:nSamples, beta[p, ], type = 'l', ylab = "Beta_p", main = "")
-  dev.off()  
-
+  #pdf(paste0("../paper/figures/trace_plots/trace_plots_", model, ".pdf"))
+  #plot(1:nSamples, sigma2, type = 'l', ylab = "Sigma2", main = "")
+  #plot(1:nSamples, tau2, type = 'l', ylab = "Tau2", main = "")
+  ##plot(1:nSamples, theta, type = 'l', ylab = "Trace Plot for theta")
+  #plot(1:nSamples, beta[1, ], type = 'l', ylab = "Beta_1", main = "")
+  #plot(1:nSamples, beta[p, ], type = 'l', ylab = "Beta_p", main = "")
+  #dev.off()  
+  
   # Posterior mean estimates (can be somewhat skewed because of back-transformations)
   posteriorMeans <- list(sigma2 = mean(sigma2),
                          tau2 = mean(tau2),
@@ -202,7 +193,8 @@ mcmc <- function(X, Y, D,
               posteriorMedians = posteriorMedians,
               credLower = credLower,
               credUpper = credUpper,
-              preds = preds))
+              preds = preds,
+	      predSamples = YPreds))
 }
 
 

@@ -4,16 +4,6 @@ library(fields)
 # Read in
 load("data/flood_data.RData")
 
-# Add in elevation data
-#elev_df <- readRDS("data/elev_data.RDS")
-#elev_df$elev_meters[which(is.na(elev_df$elev_meters))] <- 0 # 3 NA's to get rid of
-
-# Surface plot of elevation
-pred.surf <-  mba.surf(coords, no.X=100, no.Y=100, extend=T)$xyz.est
-pdf("figures/elevation.pdf")
-image(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev = TRUE))
-dev.off()
-
 # Read in test points
 indices <- readRDS("results/data_split.RDS")
 indexTest <- indices[[2]]
