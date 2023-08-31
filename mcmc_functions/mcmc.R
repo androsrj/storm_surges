@@ -1,34 +1,38 @@
 ### FINAL MCMC SKETCHING FUNCTION ###
 # Priors, Jacobians, likelihood, and posterior must already be sourced
 
-flood_mcmc <- function(X, Y, D,
-                       nKnots, theta,
-                       model = c("mpp", "full_gp", "sparse_gpp")[1],
-                       propSD = c(0.1, 0.1), 
-                       nIter = 1000, nBurn = 100, nThin = 2,
-                       mProp = 0.1, transform = TRUE) {
+mcmc <- function(X, Y, D, S,
+                 nSubj, theta,
+                 model = c("full_gp", "mpp", "sparse_gpp")[1],
+                 propSD = c(0.1, 0.1), 
+                 nIter = 1000, nBurn = 100, nThin = 2,
+                 mProp = 0.1, transform = TRUE) {
   
   # Save model type and theta globally
   model <<- model
   theta <<- theta
+  subjs <<- 1:nSubj
   
   # Dimensions
-  nObs <- nrow(X[[1]])
-  nTrain <- nObs - nKnots
+  n <- nrow(X[[1]])
   p <- ncol(X[[1]])
   
   # Generate phi and compress data, if desired
   if (transform == TRUE) {
-    m <<- round(mProp * nTrain)
-    phi <<- matrix(rnorm(m * nTrain, 0, 1 / sqrt(nTrain)), nrow = m, ncol = nTrain)
+    m <<- round(mProp * n)
+    phi <<- matrix(rnorm(m * n, 0, 1 / sqrt(n)), nrow = m, ncol = n)
     newY <<- lapply(Y, \(y) phi %*% y) 
     newX <<- lapply(X, \(x) phi %*% x) 
   } else {
-    m <<- nTrain
+    m <<- n
     phi <<- diag(m)
     newY <<- Y
     newX <<- X
   }
+  
+  # If MPP model, setup to obtain partition of covariance matrix
+  S_mpp <<- rbind(S, SKnot)
+  D_mpp <<- rdist(S_mpp)
   
   # MCMC chain properties
   nIter <- nBurn + nIter # 15 to 20 thousand ideally
@@ -122,7 +126,7 @@ flood_mcmc <- function(X, Y, D,
     SigmaBeta <- (n / m) * (Reduce("+", SigmaBetaList) + diag(p))
     SigmaBetaInv <- solve(SigmaBeta)
     #meanBeta <- (n / m) * SigmaBetaInv %*% t(newX) %*% SigmaInv %*% newY
-    meanBetaList <- lapply(storms, \(i) t(newX[[i]]) %*% SigmaInv %*% newY[[i]])
+    meanBetaList <- lapply(subjs, \(i) t(newX[[i]]) %*% SigmaInv %*% newY[[i]])
     meanBeta <- (n / m) * SigmaBetaInv %*% Reduce("+", meanBetaList)
     beta[ , i] <- t(rmvnorm(1, meanBeta, SigmaBetaInv))
     

@@ -1,9 +1,9 @@
 ### Wasserstein mean for multiple Markov chains (multiple distributions) 
-wasserstein <- function(nChains, method, alpha = 0.05) {
+wasserstein <- function(nChains, method, model, splitType, time, alpha = 0.05) {
   results <- vector("list", nChains)
+  rootPath <- paste0("results/", method, "/", model, "/", splitType, "/rep")
   for (i in 1:nChains) {
-    path <- paste0("results/", method, "/flood_rep", i, ".RDS")
-    results[[i]] <- readRDS(path)
+    results[[i]] <- readRDS(paste0(rootPath, i, ".RDS"))
   }
   wassersteinAcc <- rowMeans(sapply(results, \(x) unlist(x$acceptance)))
   wassersteinMeans <- rowMeans(sapply(results, \(x) unlist(x$posteriorMedians)))
@@ -18,17 +18,45 @@ wasserstein <- function(nChains, method, alpha = 0.05) {
                              lower = wassersteinLower,
                              upper = wassersteinUpper, 
                              predictions = predictions,
-                             time = final.time)
+                             time = time)
 }
 
 
 # Calculates the base of the covariance matrix for likelihood function
 baseVariance <- function(theta, phi, D) {
   
-  C <- exp(- theta * D)
-  B <- tcrossprod(phi %*% C, phi)
+  if (model == "mpp") {
+    #DTrain <- D[1:nTrain, 1:nTrain]
+    #DKnot <- D[(nTrain + 1):nObs, (nTrain + 1):nObs]
+    nKnots <- nrow(DKnot)
+    DCov <- D_mpp[1:n, (n + 1):(n + nKnots)]
+    
+    CTrain <- exp(- theta * diag(D))
+    CCov <- exp(- theta * DCov)
+    CKnot <- exp(- theta * DKnot)
+    
+    # Modified predictive process (variance correction)
+    middle <- tcrossprod(CCov %*% solve(CKnot), CCov)
+    delta <- diag(CTrain - diag(middle))
+    B <- tcrossprod(phi %*% (middle + delta), phi) 
+    
+  } else if (model == "full_gp") {
+    
+    C <- exp(- theta * D)
+    B <- tcrossprod(phi %*% C, phi)
+    
+  } else if (model == "sparse_gp") {
+    
+    C <- exp(- theta * D)
+    B <- tcrossprod(phi %*% C, phi)
+    B <- sparse(B)
+    
+  } else (
+    stop("Model type must be either 'mpp', 'full_gp', or 'sparse_gp'.")
+  )
   
   return(B)
+  
 }
 
 

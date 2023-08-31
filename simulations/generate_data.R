@@ -2,10 +2,8 @@ source("../other_functions/spatial_data.R")
 mySeed <- 123
 
 # Sample sizes
-nTrain <- 10000
-nKnots <- 500
-nTest <- 1000
-n <- nTrain + nKnots
+n <- 1000
+nTest <- 100
 nSubj <- 10
 
 # True parameter values
@@ -19,7 +17,7 @@ p <- length(trueBeta) + length(trueGamma)
 # Generate training data
 set.seed(mySeed)
 X <- matrix(rnorm(n * length(trueBeta)), nrow = n, ncol = length(trueBeta))
-X[1:nTrain, ] <- X[order(X[1:nTrain, 1]), ]
+X <- X[order(X[ , 1]), ]
 Z <- seq(5, 50, length = nSubj)
 train <- spatialData(n = n, 
                      X = X, 

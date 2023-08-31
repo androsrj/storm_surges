@@ -1,43 +1,29 @@
+# Helper function to run subsets in parallel for D-and-C
+DC_parallel <- function(i) {
+  path <- paste0("results/d_and_c/", model, "/", splitType, "/rep", i, ".RDS")
+  results <- mcmc(X = subsetsX[[i]], 
+                  Y = subsetsY[[i]],
+                  D = subsetsD[[i]],
+                  S = subsetsS[[i]],
+                  nSubj = nSubj,
+                  theta = runif(1, 2, 4),
+                  propSD = c(0.1, 0.25),
+                  nIter = 1000, nBurn = 100,
+                  model = model,
+                  transform = FALSE)
+  saveRDS(results, path)
+}
+
 # Helper function to run subsets in parallel for sketching
 sketching_parallel <- function(i) {
-  path <- paste0("results/sketching/flood_rep", i, ".RDS")
-  flood_results <- flood_mcmc(X = XTrain, Y = YTrain, D = DTrain,
-                              nKnots = 0,
-                              theta = thetaVals[i],
-                              propSD = c(0.01, 0.04),
-                              nIter = 2000, nBurn = 500,
-                              model = "full_gp",
-                              mProp = 0.01,
-                              transform = TRUE)
-  saveRDS(flood_results, path)
-}
-
-
-# Parallel for subdomain split
-subdomains_parallel <- function(i) {
-  path <- paste0("results/subdomains/flood_rep", i, ".RDS")
-  flood_results <- flood_mcmc(X = subsetsX[[i]], Y = subsetsY[[i]], subsetsD[[i]],
-                              nKnots = 0,
-                              theta = runif(1, 10, 100),
-                              propSD = c(0.01, 0.04),
-                              nIter = 2000, nBurn = 500,
-                              model = "full_gp",
-                              mProp = 0.01,
-                              transform = TRUE)
-  saveRDS(flood_results, path)
-}
-
-
-# Parallel for stratified split
-stratified_parallel <- function(i) {
-  path <- paste0("results/stratified/flood_rep", i, ".RDS")
-  flood_results <- flood_mcmc(X = subsetsX[[i]], Y = subsetsY[[i]], subsetsD[[i]],
-                              nKnots = 0,
-                              theta = runif(1, 10, 100),
-                              propSD = c(0.01, 0.04),
-                              nIter = 2000, nBurn = 500,
-                              model = "full_gp",
-                              mProp = 0.01,
-                              transform = TRUE)
-  saveRDS(flood_results, path)
+  path <- paste0("results/sketching/", model, "/rep", i, ".RDS")
+  results <- mcmc(X = X, Y = Y, D = D, S = S,
+                  nSubj = nSubj,
+                  theta = thetaVals[i],
+                  propSD = c(0.08, 0.65),
+                  nIter = 1000, nBurn = 100,
+                  model = model,
+                  mProp = 0.02,
+                  transform = TRUE)
+  saveRDS(results, path)
 }

@@ -15,26 +15,35 @@ library(twinning) # for multiplet splitting
 library(parallel) # For parallel computation
 library(doParallel) # For parallel computation
 library(foreach) # For parallel computation
+library(fields) # Distance matrix calculation
 library(mvtnorm)
 library(pracma) # For sparse matrix calculation
 
 # Number of clusters for parallel implementation
 #nCores <- detectCores() / 2
-nCores <- 10
+nCores <- 8
 mySeed <- 1234
-nKnots <- 500
+nKnots <- 50
 
 # Load train and test data
 load("data/train.RData")
 load("data/test.RData")
-nObs <- nrow(train$X[[1]])
-nTrain <- nObs - nKnots
-n <- nTrain
+nSubj <- length(train$X)
+n <- nrow(train$X[[1]])
 nTest <- nrow(test$X[[1]])
 X <- train$X
 Y <- train$Y
 S <- train$S
 D <- train$D
+XTest <- test$X
+YTest <- test$Y
+STest <- test$S
+DTest <- test$D
+
+# Create knot data
+locations <- runif(nKnots * 2, floor(min(S)), ceiling(max(S)))
+SKnot <- matrix(locations, nrow = nKnots, ncol = 2)
+DKnot <- rdist(SKnot)
 
 #######################################################
 ########### RUN MCMC FOR DIVIDE-AND-CONQUER ###########
@@ -45,15 +54,26 @@ DC_results_mpp <- vector("list", 4)
 
 # Divide indices for each split type (excluding knot data)
 indices <- vector("list", 4)
-indices[[1]] <- balanced_clustering(S[1:nTrain, ], nCores) # subdomains
+indices[[1]] <- balanced_clustering(S, nCores) # subdomains
 indices[[2]] <- list2Vec(partition(indices[[1]], p = rep(1/nCores, nCores))) # stratified
-indices[[3]] <- multiplet(as.data.frame(cbind(X, Y))[1:nTrain, ], k = nCores) # multiplets
-indices[[4]] <- list2Vec(split(sample(1:nTrain, nTrain, replace = FALSE), as.factor(1:nCores))) # random
+indices[[3]] <- multiplet(as.data.frame(cbind(X[[1]], Y[[1]])), k = nCores) # multiplets
+indices[[4]] <- list2Vec(split(sample(1:n, n, replace = FALSE), as.factor(1:nCores))) # random
 splits <- c("subdomains", "stratified", "multiplets", "random")
 
 # Get results for all 4 types of splits, both full GP and MPP
 for (j in 1:4) {
+  
+  # Create split indices for divide-and-conquer
   splitType <- splits[j]
+  index <- indices[[j]]
+  subsetsX <- lapply(1:nCores, function(k) { 
+    lapply(1:nSubj, function(s) X[[s]][which(index == k), ])
+  })
+  subsetsY <- lapply(1:nCores, function(k) { 
+    lapply(1:nSubj, function(s) Y[[s]][which(index == k)])
+  })
+  subsetsS <- lapply(1:nCores, function(k) S[which(index == k), ])
+  subsetsD <- lapply(1:nCores, function(k) D[which(index == k), which(index == k)])
   
   #### FULL GAUSSIAN PROCESS ####
   model <- "full_gp"
@@ -61,12 +81,6 @@ for (j in 1:4) {
   if (!dir.exists(dir.path)) {
     dir.create(dir.path)
   }
-  
-  # Create split indices for full/sparse GP (only first nTrain obs)
-  index <- indices[[j]]
-  subsetsX <- lapply(1:nCores, function(k) X[which(index == k), ])
-  subsetsY <- lapply(1:nCores, function(k) Y[which(index == k)])
-  subsetsD <- lapply(1:nCores, function(k) D[which(index == k), which(index == k)])
   
   # Parallel
   cl <- makeCluster(nCores)
@@ -79,8 +93,10 @@ for (j in 1:4) {
   
   # Wasserstein averages of quantiles across subsets
   DC_results_full_gp[[j]] <- wasserstein(nChains = nCores, 
+                                         method = "d_and_c",
                                          model = "full_gp",
-                                         splitType = splitType)
+                                         splitType = splitType,
+                                         time = final.time)
   
   #### SPARSE GAUSSIAN PROCESS ####
   model <- "sparse_gp"
@@ -100,8 +116,10 @@ for (j in 1:4) {
   
   # Wasserstein averages of quantiles across subsets
   DC_results_sparse_gp[[j]] <- wasserstein(nChains = nCores, 
+                                           method = "d_and_c",
                                            model = "sparse_gp",
-                                           splitType = splitType)
+                                           splitType = splitType,
+                                           time = final.time)
   
   #### MODIFIED PREDICTIVE PROCESS ####
   model <- "mpp"
@@ -110,23 +128,26 @@ for (j in 1:4) {
     dir.create(dir.path)
   }
   
-  # Create split indices for MPP (includes knot data)
-  index <- indices[[j]]
-  subsetsX <- lapply(1:nCores, function(k) X[c(which(index == k), (nTrain + 1):nObs), ])
-  subsetsY <- lapply(1:nCores, function(k) Y[c(which(index == k), (nTrain + 1):nObs)])
-  subsetsD <- lapply(1:nCores, function(k) D[c(which(index == k), (nTrain + 1):nObs), c(which(index == k), (nTrain + 1):nObs)])
+  #subsetsX <- lapply(1:nCores, function(k) { 
+  #  lapply(1:nSubj, function(s) X[[s]][c(which(index == k), (nTrain + 1):nObs), ])
+  #})
+  #subsetsY <- lapply(1:nCores, function(k) { 
+  #  lapply(1:nSubj, function(s) Y[[s]][c(which(index == k), (nTrain + 1):nObs)])
+  #})
+  #subsetsD <- lapply(1:nCores, function(k) D[c(which(index == k), (nTrain + 1):nObs), c(which(index == k), (nTrain + 1):nObs)])
   
   # Parallel
   cl <- makeCluster(nCores)
   registerDoParallel(cl)
   strt<-Sys.time()
   set.seed(mySeed)
-  obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% DC_parallel(i)
+  obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "fields")) %dopar% DC_parallel(i)
   final.time <- Sys.time() - strt 
   stopCluster(cl)
   
   # Wasserstein averages of quantiles across subsets
   DC_results_mpp[[j]] <- wasserstein(nChains = nCores, 
+                                     method = "d_and_c", 
                                      model = "mpp",
                                      splitType = splitType)
 }
@@ -145,10 +166,6 @@ thetaVals <- seq(1, 5, length = nCores)
 
 #### FULL GAUSSIAN PROCESS ####
 model <- "full_gp"
-X <- train$X[1:nTrain, ]
-Y <- train$Y[1:nTrain]
-S <- train$S[1:nTrain, ]
-D <- train$D[1:nTrain, 1:nTrain]
 
 # Parallel
 cl <- makeCluster(nCores)
@@ -161,8 +178,10 @@ stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
 sketching_results_full_gp <- wasserstein(nChains = nCores, 
+                                         method = "sketching", 
                                          model = "full_gp",
-                                         splitType = "sketching")
+                                         splitType = NULL,
+                                         time = final.time)
 saveRDS(sketching_results_full_gp, "results/sketching/full_gp/final_results.RDS")
 
 #### SPARSE GAUSSIAN PROCESS ####
@@ -179,29 +198,29 @@ stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
 sketching_results_sparse_gp <- wasserstein(nChains = nCores, 
-                                         model = "sparse_gp",
-                                         splitType = "sketching")
+                                           method = "sketching", 
+                                           model = "sparse_gp",
+                                           splitType = NULL,
+                                           time = final.time)
 saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp/final_results.RDS")
 
 #### MODIFIED PREDICTIVE PROCESS ####
 model <- "mpp"
-X <- train$X
-Y <- train$Y
-S <- train$S
-D <- train$D
 
 # Parallel
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt<-Sys.time()
 set.seed(mySeed)
-obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
+obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "fields")) %dopar% sketching_parallel(i)  
 final.time <- Sys.time() - strt 
 stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
 sketching_results_mpp <- wasserstein(nChains = nCores, 
+                                     method = "sketching", 
                                      model = "mpp",
-                                     splitType = "sketching")
+                                     splitType = NULL,
+                                     time = final.time)
 saveRDS(sketching_results_mpp, "results/sketching/mpp/final_results.RDS")
 
