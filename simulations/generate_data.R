@@ -1,4 +1,4 @@
-source("other_functions/spatial_data.R")
+source("../other_functions/spatial_data.R")
 mySeed <- 123
 
 # Sample sizes
@@ -18,7 +18,7 @@ p <- length(trueBeta) + length(trueGamma)
 
 # Generate training data
 set.seed(mySeed)
-X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+X <- matrix(rnorm(n * length(trueBeta)), nrow = n, ncol = length(trueBeta))
 X[1:nTrain, ] <- X[order(X[1:nTrain, 1]), ]
 Z <- seq(5, 50, length = nSubj)
 train <- spatialData(n = n, 
@@ -33,7 +33,7 @@ save(train, file = "data/train.RData")
 
 # Generate testing data
 set.seed(mySeed)
-X <- matrix(rnorm(nTest * p), nrow = nTest, ncol = p)
+X <- matrix(rnorm(nTest * length(trueBeta)), nrow = nTest, ncol = length(trueBeta))
 X <- X[order(X[ , 1]), ]
 Z <- seq(5, 50, length = nSubj)
 test <- spatialData(n = nTest, 

@@ -17,9 +17,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
-> source("other_functions/spatial_data.R")
+> source("../other_functions/spatial_data.R")
 Loading required package: spam
 Spam version 2.9-1 (2022-08-07) is loaded.
 Type 'help( Spam)' or 'demo( spam)' for a short introduction 
@@ -44,38 +42,46 @@ Try help(fields) to get started.
 > nKnots <- 500
 > nTest <- 1000
 > n <- nTrain + nKnots
+> nSubj <- 10
 > 
 > # True parameter values
 > trueSigma2 <- 2
 > trueTau2 <- 0.2
 > trueTheta <- 3
 > trueBeta <- c(2, -1)
-> p <- length(trueBeta)
+> trueGamma <- 5
+> p <- length(trueBeta) + length(trueGamma)
 > 
 > # Generate training data
 > set.seed(mySeed)
-> X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+> X <- matrix(rnorm(n * length(trueBeta)), nrow = n, ncol = length(trueBeta))
 > X[1:nTrain, ] <- X[order(X[1:nTrain, 1]), ]
+> Z <- seq(5, 50, length = nSubj)
 > train <- spatialData(n = n, 
 +                      X = X, 
++                      Z = Z,
 +                      sigma2 = trueSigma2, 
 +                      tau2 = trueTau2, 
 +                      theta = trueTheta, 
-+                      beta = trueBeta)
++                      beta = trueBeta,
++                      gamma = trueGamma)
 > save(train, file = "data/train.RData")
 > 
 > # Generate testing data
 > set.seed(mySeed)
-> X <- matrix(rnorm(nTest * p), nrow = nTest, ncol = p)
+> X <- matrix(rnorm(nTest * length(trueBeta)), nrow = nTest, ncol = length(trueBeta))
 > X <- X[order(X[ , 1]), ]
+> Z <- seq(5, 50, length = nSubj)
 > test <- spatialData(n = nTest, 
 +                     X = X, 
++                     Z = Z,
 +                     sigma2 = trueSigma2, 
 +                     tau2 = trueTau2, 
 +                     theta = trueTheta, 
-+                     beta = trueBeta)
++                     beta = trueBeta,
++                     gamma = trueGamma)
 > save(test, file = "data/test.RData")
 > 
 > proc.time()
    user  system elapsed 
- 77.901   3.026  82.481 
+ 60.785   1.566  63.258 

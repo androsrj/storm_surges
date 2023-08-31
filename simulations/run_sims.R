@@ -27,10 +27,10 @@ nKnots <- 500
 # Load train and test data
 load("data/train.RData")
 load("data/test.RData")
-nObs <- nrow(train$X)
+nObs <- nrow(train$X[[1]])
 nTrain <- nObs - nKnots
 n <- nTrain
-nTest <- nrow(test$X)
+nTest <- nrow(test$X[[1]])
 X <- train$X
 Y <- train$Y
 S <- train$S
