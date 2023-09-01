@@ -31,8 +31,10 @@ mcmc <- function(X, Y, D, S,
   }
   
   # If MPP model, setup to obtain partition of covariance matrix
-  S_mpp <<- rbind(S, SKnot)
-  D_mpp <<- rdist(S_mpp)
+  if (model == "mpp") {
+    S_mpp <<- rbind(S, SKnot)
+    D_mpp <<- rdist(S_mpp)
+  }
   
   # MCMC chain properties
   nIter <- nBurn + nIter # 15 to 20 thousand ideally

@@ -29,6 +29,7 @@ baseVariance <- function(theta, phi, D) {
     #DTrain <- D[1:nTrain, 1:nTrain]
     #DKnot <- D[(nTrain + 1):nObs, (nTrain + 1):nObs]
     nKnots <- nrow(DKnot)
+    n <- nrow(D)
     DCov <- D_mpp[1:n, (n + 1):(n + nKnots)]
     
     CTrain <- exp(- theta * diag(D))
