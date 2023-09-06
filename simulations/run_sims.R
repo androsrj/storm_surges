@@ -21,9 +21,9 @@ library(pracma) # For sparse matrix calculation
 
 # Number of clusters for parallel implementation
 #nCores <- detectCores() / 2
-nCores <- 8
+nCores <- 10
 mySeed <- 1234
-nKnots <- 50
+nKnots <- 500
 
 # Load train and test data
 load("data/train.RData")
@@ -149,7 +149,8 @@ for (j in 1:4) {
   DC_results_mpp[[j]] <- wasserstein(nChains = nCores, 
                                      method = "d_and_c", 
                                      model = "mpp",
-                                     splitType = splitType)
+                                     splitType = splitType,
+				     time = final.time)
 }
 
 saveRDS(DC_results_full_gp, "results/d_and_c/full_gp/final_results.RDS")

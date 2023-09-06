@@ -2,8 +2,8 @@ source("../other_functions/spatial_data.R")
 mySeed <- 123
 
 # Sample sizes
-n <- 1000
-nTest <- 100
+n <- 10000
+nTest <- 1000
 nSubj <- 10
 
 # True parameter values

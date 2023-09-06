@@ -40,8 +40,8 @@ Try help(fields) to get started.
 > mySeed <- 123
 > 
 > # Sample sizes
-> n <- 1000
-> nTest <- 100
+> n <- 10000
+> nTest <- 1000
 > nSubj <- 10
 > 
 > # True parameter values
@@ -84,4 +84,4 @@ Try help(fields) to get started.
 > 
 > proc.time()
    user  system elapsed 
-  7.578   3.383  11.409 
+ 52.771   1.391  55.205 

@@ -66,21 +66,21 @@ tau2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[2]),
 
 #######################################################################
 
-beta1Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[3]), 
+gammaMean <- unname(c(sapply(DC_full_gp, \(x) x$means[3]), 
                       sketch_full_gp$means[3],
                       sapply(DC_mpp, \(x) x$means[3]),
                       sketch_mpp$means[3],
                       sapply(DC_sparse_gp, \(x) x$means[3]),
                       sketch_sparse_gp$means[3]))
 
-beta1Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[3]), 
+gammaLower <- unname(c(sapply(DC_full_gp, \(x) x$lower[3]), 
                        sketch_full_gp$lower[3],
                        sapply(DC_mpp, \(x) x$lower[3]),
                        sketch_mpp$lower[3],
                        sapply(DC_sparse_gp, \(x) x$lower[3]),
                        sketch_sparse_gp$lower[3]))
 
-beta1Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[3]), 
+gammaUpper <- unname(c(sapply(DC_full_gp, \(x) x$upper[3]), 
                        sketch_full_gp$upper[3],
                        sapply(DC_mpp, \(x) x$upper[3]),
                        sketch_mpp$upper[3],
@@ -89,26 +89,49 @@ beta1Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[3]),
 
 #######################################################################
 
-beta2Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[4]), 
+beta1Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[4]), 
                       sketch_full_gp$means[4],
                       sapply(DC_mpp, \(x) x$means[4]),
                       sketch_mpp$means[4],
                       sapply(DC_sparse_gp, \(x) x$means[4]),
                       sketch_sparse_gp$means[4]))
 
-beta2Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[4]), 
+beta1Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[4]), 
                        sketch_full_gp$lower[4],
                        sapply(DC_mpp, \(x) x$lower[4]),
                        sketch_mpp$lower[4],
                        sapply(DC_sparse_gp, \(x) x$lower[4]),
                        sketch_sparse_gp$lower[4]))
 
-beta2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[4]), 
+beta1Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[4]), 
                        sketch_full_gp$upper[4],
                        sapply(DC_mpp, \(x) x$upper[4]),
                        sketch_mpp$upper[4],
                        sapply(DC_sparse_gp, \(x) x$upper[4]),
                        sketch_sparse_gp$upper[4]))
+
+#######################################################################
+
+beta2Mean <- unname(c(sapply(DC_full_gp, \(x) x$means[5]), 
+                      sketch_full_gp$means[5],
+                      sapply(DC_mpp, \(x) x$means[5]),
+                      sketch_mpp$means[5],
+                      sapply(DC_sparse_gp, \(x) x$means[5]),
+                      sketch_sparse_gp$means[5]))
+
+beta2Lower <- unname(c(sapply(DC_full_gp, \(x) x$lower[5]), 
+                       sketch_full_gp$lower[5],
+                       sapply(DC_mpp, \(x) x$lower[5]),
+                       sketch_mpp$lower[5],
+                       sapply(DC_sparse_gp, \(x) x$lower[5]),
+                       sketch_sparse_gp$lower[5]))
+
+beta2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[5]), 
+                       sketch_full_gp$upper[5],
+                       sapply(DC_mpp, \(x) x$upper[5]),
+                       sketch_mpp$upper[5],
+                       sapply(DC_sparse_gp, \(x) x$upper[5]),
+                       sketch_sparse_gp$upper[5]))
 
 #######################################################################
 
@@ -133,8 +156,9 @@ pointPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[2, ])),
                     t(sapply(DC_sparse_gp, \(x) x$predictions[2, ])),
                     sketch_sparse_gp$predictions[2, ])
 
-MSPE <- apply(pointPreds, 1, \(x) mean((x - test$Y)^2))
-cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y & upperPreds[i, ] >= test$Y)
+test_subj <- 1
+MSPE <- apply(pointPreds, 1, \(x) mean((x - test$Y[[test_subj]])^2))
+cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y[[test_subj]] & upperPreds[i, ] >= test$Y[[test_subj]])
 coverage <- apply(cvg_ind, 2, mean)
 length <- apply(upperPreds - lowerPreds, 1, mean)
 
@@ -143,6 +167,7 @@ df <- data.frame(model, splitType,
                  tau2Mean, tau2Lower, tau2Upper,
                  beta1Mean, beta1Lower, beta1Upper,
                  beta2Mean, beta2Lower, beta2Upper,
+		 gammaMean, gammaLower, gammaUpper,
                  MSPE, coverage, length)
 
 df
