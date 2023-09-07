@@ -161,6 +161,8 @@ MSPE <- apply(pointPreds, 1, \(x) mean((x - test$Y[[test_subj]])^2))
 cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y[[test_subj]] & upperPreds[i, ] >= test$Y[[test_subj]])
 coverage <- apply(cvg_ind, 2, mean)
 length <- apply(upperPreds - lowerPreds, 1, mean)
+a <- .05
+score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * (test$Y[[test_subj]] - upperPreds[i,]) * (test$Y[[test_subj]] > upperPreds[i,]) ) )
 
 df <- data.frame(model, splitType,
                  sigma2Mean, sigma2Lower, sigma2Upper,
@@ -168,6 +170,6 @@ df <- data.frame(model, splitType,
                  beta1Mean, beta1Lower, beta1Upper,
                  beta2Mean, beta2Lower, beta2Upper,
 		 gammaMean, gammaLower, gammaUpper,
-                 MSPE, coverage, length)
+                 MSPE, coverage, length, score)
 
 df

@@ -51,7 +51,7 @@ X <- lapply(storms, \(i) {
   return(X)
 })
 S <- as.matrix(coords[indexTrain, 1:2])
-D <- rdist(STrain)
+D <- rdist(S)
 
 YTest <- lapply(storms, \(i) out[i, indexTest])
 XTest <- lapply(storms, \(i) {

@@ -19,7 +19,7 @@ library(mvtnorm)
 library(pracma) # For sparse matrix calculation
 
 # Number of clusters for parallel implementation
-nCores <- 2
+nCores <- 10
 mySeed <- 1234
 
 # Load train and test data
@@ -50,7 +50,7 @@ sketching_parallel <- function(i) {
   results
 }
 
-mVals <- seq(100, 1000, by = 100)
+mVals <- seq(10, 30, by = 10)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"
@@ -73,4 +73,6 @@ for (i in 1:length(mVals)) {
   MSPE[i] <- mean((predictions[2, ] - test$Y[[test_subj]])^2)
 }
 
-
+saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
+mVals
+MSPE

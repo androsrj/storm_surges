@@ -86,8 +86,8 @@ Try help(fields) to get started.
 > 
 > # Divide using train and test indices
 > storms <- 1:50
-> YTrain <- lapply(storms, \(i) out[i, indexTrain])
-> XTrain <- lapply(storms, \(i) {
+> Y <- lapply(storms, \(i) out[i, indexTrain])
+> X <- lapply(storms, \(i) {
 +   Xintercept <- rep(1, nTrain)
 +   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
 +   Xelev <- coords$elev_meters[indexTrain]
@@ -95,8 +95,8 @@ Try help(fields) to get started.
 +   colnames(X) <- c("int", colnames(inputs), "elev")
 +   return(X)
 + })
-> STrain <- as.matrix(coords[indexTrain, 1:2])
-> DTrain <- rdist(STrain)
+> S <- as.matrix(coords[indexTrain, 1:2])
+> D <- rdist(S)
 > 
 > YTest <- lapply(storms, \(i) out[i, indexTest])
 > XTest <- lapply(storms, \(i) {
@@ -113,12 +113,11 @@ Try help(fields) to get started.
 > 
 > # Sketching
 > thetaVals <- seq(10, 100, length = totalCores)
+> model <- "full_gp"
+> nSubj <- length(storms)
+> 
 > cl <- makeCluster(nCores)
 > registerDoParallel(cl)
 > strt <- Sys.time()
 > set.seed(mySeed)
 > obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
-Error in sketching_parallel(i) : 
-  task 1 failed - "object 'model' not found"
-Calls: %dopar% -> <Anonymous>
-Execution halted

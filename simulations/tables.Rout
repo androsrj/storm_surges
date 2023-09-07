@@ -197,6 +197,8 @@ tau2   0.14724 0.15252 0.26736 0.23044
 > cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y[[test_subj]] & upperPreds[i, ] >= test$Y[[test_subj]])
 > coverage <- apply(cvg_ind, 2, mean)
 > length <- apply(upperPreds - lowerPreds, 1, mean)
+> a <- .05
+> score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * (test$Y[[test_subj]] - upperPreds[i,]) * (test$Y[[test_subj]] > upperPreds[i,]) ) )
 > 
 > df <- data.frame(model, splitType,
 +                  sigma2Mean, sigma2Lower, sigma2Upper,
@@ -204,7 +206,7 @@ tau2   0.14724 0.15252 0.26736 0.23044
 +                  beta1Mean, beta1Lower, beta1Upper,
 +                  beta2Mean, beta2Lower, beta2Upper,
 + 		 gammaMean, gammaLower, gammaUpper,
-+                  MSPE, coverage, length)
++                  MSPE, coverage, length, score)
 > 
 > df
        model  splitType sigma2Mean sigma2Lower sigma2Upper   tau2Mean
@@ -255,7 +257,23 @@ tau2   0.14724 0.15252 0.26736 0.23044
 13 -0.9716769  4.997655   4.995353   4.999941 2.290129    0.931 5.608902
 14 -0.9664043  4.997742   4.995404   5.000009 2.302766    0.933 5.603389
 15 -0.9749847  4.997808   4.997181   4.998434 2.288174    0.924 5.566461
+      score
+1  7.094073
+2  7.092680
+3  7.167688
+4  7.208720
+5  7.101777
+6  7.576835
+7  7.439859
+8  7.294534
+9  7.199716
+10 7.218306
+11 7.005271
+12 7.111102
+13 7.122074
+14 7.164426
+15 7.119013
 > 
 > proc.time()
    user  system elapsed 
- 10.944   5.345  16.253 
+ 10.235   2.987  13.221 
