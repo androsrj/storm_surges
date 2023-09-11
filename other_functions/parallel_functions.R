@@ -23,7 +23,7 @@ sketching_parallel <- function(i) {
                   propSD = c(0.04, 0.3),
                   nIter = 2000, nBurn = 500,
                   model = model,
-                  mProp = 0.05,
+                  mProp = mProp,
                   transform = TRUE)
   saveRDS(results, path)
 }

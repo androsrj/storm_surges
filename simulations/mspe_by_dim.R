@@ -50,11 +50,11 @@ sketching_parallel <- function(i) {
   results
 }
 
-mVals <- seq(10, 30, by = 10)
+mVals <- seq(10, 100, by = 10)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"
-test_subj <- 1
+test_subj <- 50
 MSPE <- numeric(length(mVals))
 
 for (i in 1:length(mVals)) {

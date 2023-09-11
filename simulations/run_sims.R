@@ -164,6 +164,7 @@ saveRDS(DC_results_mpp, "results/d_and_c/mpp/final_results.RDS")
 
 # Sequence of values for theta to iterate over
 thetaVals <- seq(1, 5, length = nCores)
+mProp <- 0.05
 
 #### FULL GAUSSIAN PROCESS ####
 model <- "full_gp"

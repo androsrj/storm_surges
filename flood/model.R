@@ -69,6 +69,7 @@ DTest <- rdist(STest)
 # Sketching
 thetaVals <- seq(10, 100, length = totalCores)
 model <- "full_gp"
+mProp <- 0.01
 nSubj <- length(storms)
 
 cl <- makeCluster(nCores)
