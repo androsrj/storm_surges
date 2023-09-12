@@ -54,6 +54,7 @@ a <- .05
 score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * (test$Y[[test_subj]] - upperPreds[i,]) * (test$Y[[test_subj]] > upperPreds[i,]) ) )
 
 df <- data.frame(model, splitType, MSPE, score)
+df$splitType <- factor(df$splitType, levels = c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"))
 
 full_gp <- gather(df[1:5, ], metric, value, MSPE:score)
 mpp <- gather(df[6:10, ], metric, value, MSPE:score)
