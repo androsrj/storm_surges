@@ -54,7 +54,7 @@ mVals <- seq(10, 100, by = 10)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"
-test_subj <- 50
+test_subj <- nSubj
 MSPE <- numeric(length(mVals))
 
 for (i in 1:length(mVals)) {

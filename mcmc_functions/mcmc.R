@@ -136,7 +136,7 @@ mcmc <- function(X, Y, D, S,
     # Computationally expensive - only compute every 10th iteration
     if (i %% 10 == 0) {
       SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
-      YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[1]] %*% beta[ , i]), sigma = SigmaTest))
+      YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[test_subj]] %*% beta[ , i]), sigma = SigmaTest))
     }
   }
   

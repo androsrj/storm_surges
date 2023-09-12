@@ -98,7 +98,7 @@ Try help(fields) to get started.
 > mPropVals <- mVals / n
 > thetaVals <- seq(1, 5, length = nCores)
 > model <- "full_gp"
-> test_subj <- 50
+> test_subj <- nSubj
 > MSPE <- numeric(length(mVals))
 > 
 > for (i in 1:length(mVals)) {
@@ -116,3 +116,14 @@ Try help(fields) to get started.
 +   predictions <- Reduce("+", predsList) / length(predsList)
 +   MSPE[i] <- mean((predictions[2, ] - test$Y[[test_subj]])^2)
 + }
+> 
+> saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
+> mVals
+ [1]  10  20  30  40  50  60  70  80  90 100
+> MSPE
+ [1] 2.389695 2.278205 2.354804 2.423210 2.350118 2.309110 2.309927 2.356096
+ [9] 2.307532 2.341426
+> 
+> proc.time()
+    user   system  elapsed 
+ 105.579   27.868 2391.506 
