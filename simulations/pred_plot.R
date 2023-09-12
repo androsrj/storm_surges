@@ -110,8 +110,9 @@ plot_s <- ggplot(sparse_gp, aes(splitType, value, fill = metric)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggtitle("Sparse GP")
 
+pdf("../figures/pred_diagnostics.pdf")
 ggarrange(plot_f, plot_m, plot_s, ncol = 3, nrow = 1, common.legend = TRUE, legend = "bottom")
-
+dev.off()
 
 
 
