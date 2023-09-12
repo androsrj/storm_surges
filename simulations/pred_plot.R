@@ -53,13 +53,7 @@ length <- apply(upperPreds - lowerPreds, 1, mean)
 a <- .05
 score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * (test$Y[[test_subj]] - upperPreds[i,]) * (test$Y[[test_subj]] > upperPreds[i,]) ) )
 
-df <- data.frame(model, splitType,
-                 sigma2Mean, sigma2Lower, sigma2Upper,
-                 tau2Mean, tau2Lower, tau2Upper,
-                 beta1Mean, beta1Lower, beta1Upper,
-                 beta2Mean, beta2Lower, beta2Upper,
-                 gammaMean, gammaLower, gammaUpper,
-                 MSPE, coverage, length, score)
+df <- data.frame(model, splitType, MSPE, score)
 
 full_gp <- gather(df[1:5, ], metric, value, MSPE:score)
 mpp <- gather(df[6:10, ], metric, value, MSPE:score)
