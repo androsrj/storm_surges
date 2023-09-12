@@ -71,6 +71,7 @@ thetaVals <- seq(10, 100, length = totalCores)
 model <- "full_gp"
 mProp <- 0.01
 nSubj <- length(storms)
+test_subj <- 1
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
@@ -83,7 +84,11 @@ if (file.exists(".RData")) {
   file.remove(".RData")
 }
 gc()
-flood_results_sketching <- wasserstein(nChains = totalCores, method = "sketching")
+flood_results_sketching <- wasserstein(nChains = totalCores, 
+                                       method = "sketching", 
+                                       model = "full_gp", 
+                                       splitType = NULL, 
+                                       time = final.time)
 saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 
 
