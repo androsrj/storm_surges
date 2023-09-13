@@ -162,7 +162,11 @@ cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y[[test_subj]] & upperPreds
 coverage <- apply(cvg_ind, 2, mean)
 length <- apply(upperPreds - lowerPreds, 1, mean)
 a <- .05
-score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * (test$Y[[test_subj]] - upperPreds[i,]) * (test$Y[[test_subj]] > upperPreds[i,]) ) )
+score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 
+                                   2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * 
+                                   (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * 
+                                   (test$Y[[test_subj]] - upperPreds[i,]) * 
+                                   (test$Y[[test_subj]] > upperPreds[i,]) ) )
 
 df <- data.frame(model, splitType,
                  sigma2Mean, sigma2Lower, sigma2Upper,
