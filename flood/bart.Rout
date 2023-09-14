@@ -1,0 +1,169 @@
+
+R version 4.2.0 (2022-04-22) -- "Vigorous Calisthenics"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # Clear environment and free unused memory
+> rm(list = ls())
+> gc()
+         used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells 275574 14.8     787354   42.1    350000   18.7
+Vcells 462598  3.6  192843372 1471.3 200275819 1528.0
+> 
+> # SOURCES
+> source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
+> source("../mcmc_functions/priors.R")
+> source("../mcmc_functions/jacobians.R")
+> source("../mcmc_functions/likelihood.R")
+> source("../mcmc_functions/posterior.R")
+> source("../other_functions/parallel_functions.R") # Parallel wrapper functions
+> source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
+> 
+> # Libraries
+> library(BayesTree)
+> library(fields)
+Loading required package: spam
+Spam version 2.9-1 (2022-08-07) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:mvtnorm’:
+
+    rmvnorm, rmvt
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+Loading required package: viridis
+Loading required package: viridisLite
+
+Try help(fields) to get started.
+> 
+> # Read in
+> load("data/flood_data.RData")
+> 
+> # Clusters and seed
+> nCores <- 2
+> totalCores <- 10
+> mySeed <- 123
+> 
+> # Randomly sample indices for train and test data
+> nObs <- nrow(coords)
+> indices <- readRDS("results/data_split.RDS")
+> indexTrain <- indices[[1]]
+> indexTest <- indices[[2]]
+> nTrain <- n <- length(indexTrain)
+> nTest <- length(indexTest)
+> 
+> # Divide using train and test indices
+> storms <- 1:50
+> Y <- lapply(storms, \(i) out[i, indexTrain])
+> X <- lapply(storms, \(i) {
++   Xintercept <- rep(1, nTrain)
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
++   Xelev <- coords$elev_meters[indexTrain]
++   X <- cbind(Xintercept, Xstorm, Xelev)
++   colnames(X) <- c("int", colnames(inputs), "elev")
++   return(X)
++ })
+> S <- as.matrix(coords[indexTrain, 1:2])
+> D <- rdist(S)
+> 
+> YTest <- lapply(storms, \(i) out[i, indexTest])
+> XTest <- lapply(storms, \(i) {
++   Xintercept <- rep(1, nTest)
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
++   Xelev <- coords$elev_meters[indexTest]
++   X <- cbind(Xintercept, Xstorm, Xelev)
++   colnames(X) <- c("int", colnames(inputs), "elev")
++   return(X)
++ })
+> STest <- as.matrix(coords[indexTest, 1:2])
+> DTest <- rdist(STest)
+> 
+> 
+> # BART
+> nSubj <- length(storms)
+> test_subj <- 1
+> flood_results_bart <- bart(X[[1]], Y[[1]], XTest[[1]])
+
+
+Running BART with numeric y
+
+number of trees: 200
+Prior:
+	k: 2.000000
+	degrees of freedom in sigma prior: 3
+	quantile in sigma prior: 0.900000
+	power and base for tree prior: 2.000000 0.950000
+	use quantiles for rule cut points: 0
+data:
+	number of training observations: 47233
+	number of test observations: 2486
+	number of explanatory variables: 7
+
+
+Cutoff rules c in x<=c vs x>c
+Number of cutoffs: (var: number of possible c):
+(1: 100) (2: 100) (3: 100) (4: 100) (5: 100) 
+(6: 100) (7: 100) 
+
+
+Running mcmc loop:
+iteration: 100 (of 1100)
+iteration: 200 (of 1100)
+iteration: 300 (of 1100)
+iteration: 400 (of 1100)
+iteration: 500 (of 1100)
+iteration: 600 (of 1100)
+iteration: 700 (of 1100)
+iteration: 800 (of 1100)
+iteration: 900 (of 1100)
+iteration: 1000 (of 1100)
+iteration: 1100 (of 1100)
+time for loop: 1942
+
+Tree sizes, last iteration:
+1 1 2 2 2 2 2 2 1 2 2 1 2 2 2 1 1 2 2 1 
+1 1 2 1 2 2 2 2 2 1 1 2 2 1 1 1 2 2 2 2 
+1 2 2 1 1 1 1 2 1 2 2 2 1 2 2 2 2 1 2 1 
+2 3 2 2 2 1 2 1 2 1 2 2 1 1 2 2 2 2 2 2 
+2 2 2 2 2 2 2 2 3 1 2 2 1 2 1 2 1 2 2 2 
+3 2 2 2 3 2 2 2 2 1 2 2 1 2 2 2 2 1 2 2 
+2 1 2 2 1 2 2 2 2 1 2 1 1 1 3 1 2 1 1 2 
+2 2 1 1 1 2 3 2 1 1 1 1 2 2 1 1 2 2 2 2 
+2 2 2 2 1 2 2 1 1 1 2 1 1 2 2 2 1 1 2 1 
+1 2 1 1 2 2 2 2 2 1 2 1 2 1 1 3 1 1 3 1 
+Variable Usage, last iteration (var:count):
+(1: 0) (2: 0) (3: 0) (4: 0) (5: 0) 
+(6: 0) (7: 135) 
+DONE BART 11-2-2014
+
+> 
+> saveRDS(flood_results_bart, paste0("results/flood_results_bart.RDS"))
+> 
+> 
+> proc.time()
+    user   system  elapsed 
+1945.962   44.689 1992.333 

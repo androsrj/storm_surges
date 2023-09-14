@@ -50,12 +50,13 @@ sketching_parallel <- function(i) {
   results
 }
 
-mVals <- seq(10, 100, by = 10)
+mVals <- c(5, 50, 100, 250, 500)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"
 test_subj <- nSubj
 MSPE <- numeric(length(mVals))
+mTrue <- matrix(0, nrow = length(mVals), ncol = nCores)
 
 for (i in 1:length(mVals)) {
   mProp <- mPropVals[[i]]
@@ -71,8 +72,10 @@ for (i in 1:length(mVals)) {
   predsList <- lapply(obj, \(x) x$preds)
   predictions <- Reduce("+", predsList) / length(predsList)
   MSPE[i] <- mean((predictions[2, ] - test$Y[[test_subj]])^2)
+  mTrue[i, ] <- sapply(obj, \(x) x$m)
 }
 
 saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
 mVals
 MSPE
+mTrue

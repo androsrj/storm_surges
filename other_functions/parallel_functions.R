@@ -20,7 +20,7 @@ sketching_parallel <- function(i) {
   results <- mcmc(X = X, Y = Y, D = D, S = S,
                   nSubj = nSubj,
                   theta = thetaVals[i],
-                  propSD = c(0.04, 0.3),
+                  propSD = propSD,
                   nIter = 2000, nBurn = 500,
                   model = model,
                   mProp = mProp,

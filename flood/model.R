@@ -70,6 +70,7 @@ DTest <- rdist(STest)
 thetaVals <- seq(10, 100, length = totalCores)
 model <- "full_gp"
 mProp <- 0.01
+propSD <- c(0.01, 0.01)
 nSubj <- length(storms)
 test_subj <- 1
 

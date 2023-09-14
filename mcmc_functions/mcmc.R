@@ -200,7 +200,8 @@ mcmc <- function(X, Y, D, S,
               credLower = credLower,
               credUpper = credUpper,
               preds = preds,
-	      predSamples = YPreds))
+	      predSamples = YPreds,
+	      m = m))
 }
 
 

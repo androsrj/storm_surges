@@ -18,10 +18,66 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > sketching <- readRDS("results/flood_results_sketching.RDS")
-> subdomains <- readRDS("results/flood_results_subdomains.RDS")
-Error in gzfile(file, "rb") : cannot open the connection
-Calls: readRDS -> gzfile
-In addition: Warning message:
-In gzfile(file, "rb") :
-  cannot open compressed file 'results/flood_results_subdomains.RDS', probable reason 'No such file or directory'
-Execution halted
+> data_split <- readRDS("results/data_split.RDS")
+> indexTest <- data_split[[2]]
+> load("data/flood_data.RData")
+> test_subj <- 1
+> trueTest <- out[test_subj, indexTest]
+> 
+> # Parameter estimates
+> sigma2 <- c(sketching$means['sigma2'], 
++             sketching$lower[1],
++             sketching$upper[1])
+> tau2 <- c(sketching$means['tau2'], 
++           sketching$lower[2],
++           sketching$upper[2])
+> beta <- c(sketching$means['beta7'], 
++           sketching$lower[9],
++           sketching$upper[9])
+> 
+> # Length
+> length <- mean(sketching$predictions[3,] - sketching$predictions[1,])
+> 
+> # Coverage
+> cvg <- mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
+> 
+> # MSPE
+> mspe <- mean((sketching$predictions[2,] - trueTest)^2)
+> 
+> # Interval score
+> a <- 0.05
+> score <- mean( (sketching$predictions[3, ] - sketching$predictions[1, ]) + 
++                  2/a * (sketching$predictions[1, ] - trueTest[[test_subj]]) * 
++                  (trueTest[[test_subj]] < sketching$predictions[1, ]) + 2/a * 
++                  (trueTest[[test_subj]] - sketching$predictions[3, ]) * 
++                  (trueTest[[test_subj]] > sketching$predictions[3, ]) ) 
+> 
+> # Over/under 4 feet
+> trueFeet <- trueTest * 3.28084
+> predsFeet <- sketching$predictions[2, ] * 3.28084
+> trueOver <- trueFeet >= 4.0
+> predOver <- predsFeet >= 4.0
+> pctCorrect <- mean(trueOver == predOver)
+> 
+> # Final results table
+> final_df <- data.frame(sigma2, tau2, beta)
+> rownames(final_df) <- c("mean", "lower", "upper")
+> final_df
+         sigma2      tau2       beta
+mean  0.5963683 0.2409821 -0.5840661
+lower 0.5934489 0.2399131 -0.5847583
+upper 0.5996633 0.2420345 -0.5833745
+> 
+> # Predictive diagnostics
+> c(cvg = cvg, length = length, mspe = mspe, score = score, pct = pctCorrect)
+       cvg     length       mspe      score        pct 
+ 0.9239743  3.4876045  1.1311473 26.6873620  0.8664521 
+> 
+> # Also make sure that acceptance rates are satisfactory
+> sketching$acc
+ sigma2    tau2 
+0.25480 0.14444 
+> 
+> proc.time()
+   user  system elapsed 
+  6.079   2.819   8.865 
