@@ -32,7 +32,7 @@ Vcells 462598  3.6  192843372 1471.3 200275819 1528.0
 > source("../mcmc_functions/jacobians.R")
 > source("../mcmc_functions/likelihood.R")
 > source("../mcmc_functions/posterior.R")
-> source("../other_functions/parallel_functions.R") # Parallel wrapper functions
+> source("../other_functions/sparse.R") # For sparse GP
 > source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
 > 
 > # Libraries
@@ -41,8 +41,7 @@ Vcells 462598  3.6  192843372 1471.3 200275819 1528.0
 Loading required package: foreach
 Loading required package: iterators
 > library(foreach) # For parallel computation
-> library(mvtnorm)
-> library(fields)
+> library(fields) # Distance matrix calculation
 Loading required package: spam
 Spam version 2.9-1 (2022-08-07) is loaded.
 Type 'help( Spam)' or 'demo( spam)' for a short introduction 
@@ -64,9 +63,7 @@ Loading required package: viridis
 Loading required package: viridisLite
 
 Try help(fields) to get started.
-> library(MBA)
-> library(anticlust) # for balanced clustering
-> library(splitTools) # for stratified splitting
+> library(mvtnorm)
 > 
 > # Read in
 > load("data/flood_data.RData")
@@ -82,9 +79,8 @@ Try help(fields) to get started.
 > n <- nTrain <- floor(pctTrain * nObs)
 > nTest <- ceiling((1 - pctTrain) * nObs)
 > set.seed(mySeed)
-> indexTrain <- sort(sample(1:nObs, nTrain))
-> indexTest <- sort(setdiff(1:nObs, indexTrain))
-> saveRDS(list(indexTrain, indexTest), "results/data_split.RDS")
+> indexTrain <- readRDS("results/data_split.RDS")[[1]]
+> indexTest <- readRDS("results/data_split.RDS")[[2]]
 > 
 > # Divide using train and test indices
 > storms <- 1:50
@@ -112,97 +108,42 @@ Try help(fields) to get started.
 > STest <- as.matrix(coords[indexTest, 1:2])
 > DTest <- rdist(STest)
 > 
+> # Helper function to run subsets in parallel for sketching
+> sketching_parallel <- function(i) {
++   results <- mcmc(X = X, Y = Y, D = D, S = S,
++                   nSubj = nSubj,
++                   theta = thetaVals[i],
++                   propSD = c(0.02, 0.02),
++                   nIter = 2000, nBurn = 500,
++                   model = model,
++                   mProp = mProp,
++                   transform = TRUE)
++   results
++ }
 > 
-> # Sketching
+> mVals <- c(5, 10, 25, 50, 100)
+> mPropVals <- mVals / n
+> nSubj <- length(X)
 > thetaVals <- seq(10, 100, length = totalCores)
 > model <- "full_gp"
-> mProp <- 0.01
-> propSD <- c(0.01, 0.01)
-> nSubj <- length(storms)
 > test_subj <- 1
+> MSPE <- numeric(length(mVals))
+> acc <- matrix(0, nrow = length(mVals), ncol = 2)
 > 
-> cl <- makeCluster(nCores)
-> registerDoParallel(cl)
-> strt <- Sys.time()
-> set.seed(mySeed)
-> obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
-> final.time <- Sys.time() - strt 
-> stopCluster(cl)
-> if (file.exists(".RData")) {
-+   file.remove(".RData")
+> for (i in 1:length(mVals)) {
++   mProp <- mPropVals[[i]]
++   
++   cl <- makeCluster(nCores)
++   registerDoParallel(cl)
++   strt <- Sys.time()
++   set.seed(mySeed)
++   obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
++   final.time <- Sys.time() - strt 
++   stopCluster(cl)
++   
++   predsList <- lapply(obj, \(x) x$preds)
++   predictions <- Reduce("+", predsList) / length(predsList)
++   MSPE[i] <- mean((predictions[2, ] - YTest[[test_subj]])^2)
++   accVals <- lapply(obj, \(x) x$acceptance)
++   acc[i, ] <- Reduce("+", accVals) / length(accVals)
 + }
-[1] TRUE
-> gc()
-             used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1975117   105.5    3222085   172.1    3222085   172.1
-Vcells 2459559587 18765.0 3533935756 26961.8 2462225858 18785.3
-> flood_results_sketching <- wasserstein(nChains = totalCores, 
-+                                        method = "sketching", 
-+                                        model = "full_gp", 
-+                                        splitType = NULL, 
-+                                        time = final.time)
-> saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> # D&C, subdomain split
-> #indexSubd <- balanced_clustering(STrain, totalCores)
-> #subsetsX <- lapply(1:totalCores, function(k) { 
-> #  lapply(storms, function(s) XTrain[[s]][which(indexSubd == k), ])
-> #  })
-> #subsetsY <- lapply(1:totalCores, function(k) { 
-> #  lapply(storms, function(s) YTrain[[s]][which(indexSubd == k)])
-> #})
-> #subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexSubd == k), which(indexSubd == k)])
-> #
-> #cl <- makeCluster(nCores)
-> #registerDoParallel(cl)
-> #strt <- Sys.time()
-> #set.seed(mySeed)
-> #obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% subdomains_parallel(i)  
-> #final.time <- Sys.time() - strt 
-> #stopCluster(cl)
-> #if (file.exists(".RData")) {
-> #  file.remove(".RData")
-> #}
-> #gc()
-> #flood_results_subdomains <- wasserstein(nChains = totalCores, method = "subdomains")
-> #saveRDS(flood_results_subdomains, paste0("results/flood_results_subdomains.RDS"))
-> 
-> 
-> 
-> # D&C, stratified split
-> #indexStrat <- list2Vec(partition(indexSubd, p = rep(1/nCores, totalCores)))
-> #subsetsX <- lapply(1:totalCores, function(k) { 
-> #  lapply(storms, function(s) XTrain[[s]][which(indexStrat == k), ])
-> #})
-> #subsetsY <- lapply(1:totalCores, function(k) { 
-> #  lapply(storms, function(s) YTrain[[s]][which(indexStrat == k)])
-> #})
-> #subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexStrat == k), which(indexStrat == k)])
-> #
-> #cl <- makeCluster(nCores)
-> #registerDoParallel(cl)
-> #strt <- Sys.time()
-> #set.seed(mySeed)
-> #obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% stratified_parallel(i)  
-> #final.time <- Sys.time() - strt 
-> #stopCluster(cl)
-> #if (file.exists(".RData")) {
-> #  file.remove(".RData")
-> #}
-> #gc()
-> #flood_results_stratified <- wasserstein(nChains = totalCores, method = "stratified")
-> #saveRDS(flood_results_stratified, paste0("results/flood_results_stratified.RDS"))
-> 
-> 
-> 
-> proc.time()
-     user    system   elapsed 
-   73.302    14.086 44549.663 

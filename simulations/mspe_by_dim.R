@@ -8,15 +8,11 @@ source("../other_functions/sparse.R") # For sparse GP
 source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
 
 # Libraries
-library(anticlust) # for balanced clustering
-library(splitTools) # for stratified splitting
-library(twinning) # for multiplet splitting
 library(parallel) # For parallel computation
 library(doParallel) # For parallel computation
 library(foreach) # For parallel computation
 library(fields) # Distance matrix calculation
 library(mvtnorm)
-library(pracma) # For sparse matrix calculation
 
 # Number of clusters for parallel implementation
 nCores <- 10
@@ -50,7 +46,7 @@ sketching_parallel <- function(i) {
   results
 }
 
-mVals <- c(5, 50, 100, 250, 500)
+mVals <- c(5, 10, 25, 50, 100, 250, 500)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"

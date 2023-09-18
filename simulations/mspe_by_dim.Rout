@@ -94,7 +94,7 @@ Try help(fields) to get started.
 +   results
 + }
 > 
-> mVals <- c(5, 50, 100)
+> mVals <- c(5, 50, 100, 250, 500)
 > mPropVals <- mVals / n
 > thetaVals <- seq(1, 5, length = nCores)
 > model <- "full_gp"
@@ -121,15 +121,17 @@ Try help(fields) to get started.
 > 
 > saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
 > mVals
-[1]   5  50 100
+[1]   5  50 100 250 500
 > MSPE
-[1] 2.523273 2.416877 2.363692
+[1] 2.676968 2.375664 2.309003 2.315931 2.308227
 > mTrue
      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
 [1,]    5    5    5    5    5    5    5    5    5     5
 [2,]   50   50   50   50   50   50   50   50   50    50
 [3,]  100  100  100  100  100  100  100  100  100   100
+[4,]  250  250  250  250  250  250  250  250  250   250
+[5,]  500  500  500  500  500  500  500  500  500   500
 > 
 > proc.time()
-   user  system elapsed 
- 45.195   9.672 735.240 
+    user   system  elapsed 
+  63.097   15.179 4664.365 

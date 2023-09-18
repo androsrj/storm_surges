@@ -64,20 +64,20 @@ Type 'q()' to quit R.
 > rownames(final_df) <- c("mean", "lower", "upper")
 > final_df
          sigma2      tau2       beta
-mean  0.5963683 0.2409821 -0.5840661
-lower 0.5934489 0.2399131 -0.5847583
-upper 0.5996633 0.2420345 -0.5833745
+mean  0.6120697 0.2555053 -0.5798916
+lower 0.6088140 0.2544146 -0.5805844
+upper 0.6152034 0.2566420 -0.5792032
 > 
 > # Predictive diagnostics
 > c(cvg = cvg, length = length, mspe = mspe, score = score, pct = pctCorrect)
        cvg     length       mspe      score        pct 
- 0.9239743  3.4876045  1.1311473 26.6873620  0.8664521 
+ 0.9255833  3.5541309  1.1549321 25.3931891  0.8644409 
 > 
 > # Also make sure that acceptance rates are satisfactory
 > sketching$acc
  sigma2    tau2 
-0.25480 0.14444 
+0.26036 0.25028 
 > 
 > proc.time()
    user  system elapsed 
-  6.079   2.819   8.865 
+  6.111   4.084  10.167 

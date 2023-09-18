@@ -27,7 +27,7 @@ load("data/flood_data.RData")
 # Clusters and seed
 nCores <- 2
 totalCores <- 10
-mySeed <- 123
+mySeed <- 999
 
 # Randomly sample indices for train and test data
 nObs <- nrow(coords)
