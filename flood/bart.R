@@ -3,13 +3,8 @@ rm(list = ls())
 gc()
 
 # SOURCES
-source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
-source("../mcmc_functions/priors.R")
-source("../mcmc_functions/jacobians.R")
-source("../mcmc_functions/likelihood.R")
-source("../mcmc_functions/posterior.R")
-source("../other_functions/parallel_functions.R") # Parallel wrapper functions
-source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
+#source("../other_functions/parallel_functions.R") # Parallel wrapper functions
+#source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
 
 # Libraries
 library(BayesTree)
@@ -33,35 +28,21 @@ nTest <- length(indexTest)
 
 # Divide using train and test indices
 storms <- 1:50
-Y <- lapply(storms, \(i) out[i, indexTrain])
-X <- lapply(storms, \(i) {
-  Xintercept <- rep(1, nTrain)
-  Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
-  Xelev <- coords$elev_meters[indexTrain]
-  X <- cbind(Xintercept, Xstorm, Xelev)
-  colnames(X) <- c("int", colnames(inputs), "elev")
-  return(X)
-})
-S <- as.matrix(coords[indexTrain, 1:2])
-D <- rdist(S)
+Y <- c(t(out[storms, indexTrain]))
+X <- cbind(
+  inputs[storms, ][rep(storms, each = nTrain), ],
+  elev = rep(coords$elev_meters[indexTrain], length(storms))
+)
 
-YTest <- lapply(storms, \(i) out[i, indexTest])
-XTest <- lapply(storms, \(i) {
-  Xintercept <- rep(1, nTest)
-  Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
-  Xelev <- coords$elev_meters[indexTest]
-  X <- cbind(Xintercept, Xstorm, Xelev)
-  colnames(X) <- c("int", colnames(inputs), "elev")
-  return(X)
-})
-STest <- as.matrix(coords[indexTest, 1:2])
-DTest <- rdist(STest)
+YTest <- c(t(out[storms, indexTest]))
+XTest <- cbind(
+  inputs[storms, ][rep(storms, each = nTest), ],
+  elev = rep(coords$elev_meters[indexTest], length(storms))
+)
 
 
 # BART
-nSubj <- length(storms)
-test_subj <- 1
-flood_results_bart <- bart(X[[1]], Y[[1]], XTest[[1]])
+flood_results_bart <- bart(X, Y, XTest)
 
 saveRDS(flood_results_bart, paste0("results/flood_results_bart.RDS"))
 
