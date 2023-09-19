@@ -1,6 +1,8 @@
 sketching <- readRDS("results/flood_results_sketching.RDS")
+bart <- readRDS("results/flood_results_bart.RDS")
 data_split <- readRDS("results/data_split.RDS")
 indexTest <- data_split[[2]]
+nTest <- length(indexTest)
 load("data/flood_data.RData")
 test_subj <- 1
 trueTest <- out[test_subj, indexTest]
@@ -16,37 +18,67 @@ beta <- c(sketching$means['beta7'],
           sketching$lower[9],
           sketching$upper[9])
 
+# BART predictions
+predIndex <- ((test_subj - 1) * nTest + 1):(test_subj * nTest)
+bartPreds <- flood_results_bart$yhat.test.mean[predIndex]
+bartCI <- unname(apply(flood_results_bart$yhat.test[predIndex], 2, quantile, c(0.025, 0.975)))
+bartLower <- bartCI[1, ]
+bartUpper <- bartCI[2, ]
+
+
 # Length
-length <- mean(sketching$predictions[3,] - sketching$predictions[1,])
+lengthSketch <- mean(sketching$predictions[3,] - sketching$predictions[1,])
+lengthBart <- mean(bartUpper - bartLower)
+length <- c(lengthSketch, lengthBart)
 
 # Coverage
-cvg <- mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
+cvgSketch <- mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
+cvgBart <- mean(bartUpper > trueTest & bartLower < trueTest)
+cvg <- c(cvgSketch, cvgBart)
 
 # MSPE
-mspe <- mean((sketching$predictions[2,] - trueTest)^2)
+mspeSketch <- mean((sketching$predictions[2,] - trueTest)^2)
+mspeBart <- mean((bartPreds - trueTest)^2)
+mspe <- c(mspeSketch, mspeBart)
 
 # Interval score
 a <- 0.05
-score <- mean( (sketching$predictions[3, ] - sketching$predictions[1, ]) + 
-                 2/a * (sketching$predictions[1, ] - trueTest[[test_subj]]) * 
-                 (trueTest[[test_subj]] < sketching$predictions[1, ]) + 2/a * 
-                 (trueTest[[test_subj]] - sketching$predictions[3, ]) * 
-                 (trueTest[[test_subj]] > sketching$predictions[3, ]) ) 
+scoreSketch <- mean( (sketching$predictions[3, ] - sketching$predictions[1, ]) + 
+                 2/a * (sketching$predictions[1, ] - trueTest) * 
+                 (trueTest < sketching$predictions[1, ]) + 
+                 2/a * (trueTest - sketching$predictions[3, ]) * 
+                 (trueTest > sketching$predictions[3, ]) ) 
+scoreBart <- mean( (bartUpper - bartLower) +
+		   2/a * (bartLower - trueTest) *
+		   (trueTest < bartLower) + 
+		   2/a * (trueTest - bartUpper) * 
+		   (trueTest > bartUpper) )
+score <- c(scoreSketch, scoreBart)
 
 # Over/under 4 feet
 trueFeet <- trueTest * 3.28084
-predsFeet <- sketching$predictions[2, ] * 3.28084
+sketchFeet <- sketching$predictions[2, ] * 3.28084
 trueOver <- trueFeet >= 4.0
-predOver <- predsFeet >= 4.0
-pctCorrect <- mean(trueOver == predOver)
+sketchOver <- sketchFeet >= 4.0
+sketchPct <- mean(trueOver == sketchOver)
+bartFeet <- bartPreds * 3.28084
+bartOver <- bartFeet >= 4.0
+bartPct <- mean(trueOver == bartOver)
+pct <- c(sketchPct, bartPct)
 
-# Final results table
-final_df <- data.frame(sigma2, tau2, beta)
-rownames(final_df) <- c("mean", "lower", "upper")
-final_df
+# Parameter estimates
+params <- data.frame(sigma2, tau2, beta)
+rownames(params) <- c("mean", "lower", "upper")
+params
 
-# Predictive diagnostics
-c(cvg = cvg, length = length, mspe = mspe, score = score, pct = pctCorrect)
+# Predictive diagnostics (our approach vs BART)
+preds_df <- data.frame(cvg = cvg, 
+		       length = length, 
+		       mspe = mspe, 
+		       score = score, 
+		       pct = pctCorrect)
+rownames(preds_df) <- c("Sketching", "BART")
+preds_df
 
 # Also make sure that acceptance rates are satisfactory
 sketching$acc

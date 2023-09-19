@@ -27,38 +27,9 @@ Ncells 275574 14.8     787354   42.1    350000   18.7
 Vcells 462598  3.6  192843372 1471.3 200275819 1528.0
 > 
 > # SOURCES
-> source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
-> source("../mcmc_functions/priors.R")
-> source("../mcmc_functions/jacobians.R")
-> source("../mcmc_functions/likelihood.R")
-> source("../mcmc_functions/posterior.R")
-> source("../other_functions/parallel_functions.R") # Parallel wrapper functions
-> source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
 > 
 > # Libraries
 > library(BayesTree)
-> library(fields)
-Loading required package: spam
-Spam version 2.9-1 (2022-08-07) is loaded.
-Type 'help( Spam)' or 'demo( spam)' for a short introduction 
-and overview of this package.
-Help for individual functions is also obtained by adding the
-suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
-
-Attaching package: ‘spam’
-
-The following objects are masked from ‘package:mvtnorm’:
-
-    rmvnorm, rmvt
-
-The following objects are masked from ‘package:base’:
-
-    backsolve, forwardsolve
-
-Loading required package: viridis
-Loading required package: viridisLite
-
-Try help(fields) to get started.
 > 
 > # Read in
 > load("data/flood_data.RData")
@@ -77,36 +48,22 @@ Try help(fields) to get started.
 > nTest <- length(indexTest)
 > 
 > # Divide using train and test indices
-> storms <- 1:50
-> Y <- lapply(storms, \(i) out[i, indexTrain])
-> X <- lapply(storms, \(i) {
-+   Xintercept <- rep(1, nTrain)
-+   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
-+   Xelev <- coords$elev_meters[indexTrain]
-+   X <- cbind(Xintercept, Xstorm, Xelev)
-+   colnames(X) <- c("int", colnames(inputs), "elev")
-+   return(X)
-+ })
-> S <- as.matrix(coords[indexTrain, 1:2])
-> D <- rdist(S)
+> storms <- 1:5
+> Y <- c(t(out[storms, indexTrain]))
+> X <- cbind(
++   inputs[storms, ][rep(storms, each = nTrain), ],
++   elev = rep(coords$elev_meters[indexTrain], length(storms))
++ )
 > 
-> YTest <- lapply(storms, \(i) out[i, indexTest])
-> XTest <- lapply(storms, \(i) {
-+   Xintercept <- rep(1, nTest)
-+   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
-+   Xelev <- coords$elev_meters[indexTest]
-+   X <- cbind(Xintercept, Xstorm, Xelev)
-+   colnames(X) <- c("int", colnames(inputs), "elev")
-+   return(X)
-+ })
-> STest <- as.matrix(coords[indexTest, 1:2])
-> DTest <- rdist(STest)
+> YTest <- c(t(out[storms, indexTest]))
+> XTest <- cbind(
++   inputs[storms, ][rep(storms, each = nTest), ],
++   elev = rep(coords$elev_meters[indexTest], length(storms))
++ )
 > 
 > 
 > # BART
-> nSubj <- length(storms)
-> test_subj <- 1
-> flood_results_bart <- bart(X[[1]], Y[[1]], XTest[[1]])
+> flood_results_bart <- bart(X, Y, XTest)
 
 
 Running BART with numeric y
@@ -119,15 +76,15 @@ Prior:
 	power and base for tree prior: 2.000000 0.950000
 	use quantiles for rule cut points: 0
 data:
-	number of training observations: 47233
-	number of test observations: 2486
-	number of explanatory variables: 7
+	number of training observations: 236165
+	number of test observations: 12430
+	number of explanatory variables: 6
 
 
 Cutoff rules c in x<=c vs x>c
 Number of cutoffs: (var: number of possible c):
 (1: 100) (2: 100) (3: 100) (4: 100) (5: 100) 
-(6: 100) (7: 100) 
+(6: 100) 
 
 
 Running mcmc loop:
@@ -142,22 +99,22 @@ iteration: 800 (of 1100)
 iteration: 900 (of 1100)
 iteration: 1000 (of 1100)
 iteration: 1100 (of 1100)
-time for loop: 1942
+time for loop: 30502
 
 Tree sizes, last iteration:
-1 1 2 2 2 2 2 2 1 2 2 1 2 2 2 1 1 2 2 1 
-1 1 2 1 2 2 2 2 2 1 1 2 2 1 1 1 2 2 2 2 
-1 2 2 1 1 1 1 2 1 2 2 2 1 2 2 2 2 1 2 1 
-2 3 2 2 2 1 2 1 2 1 2 2 1 1 2 2 2 2 2 2 
-2 2 2 2 2 2 2 2 3 1 2 2 1 2 1 2 1 2 2 2 
-3 2 2 2 3 2 2 2 2 1 2 2 1 2 2 2 2 1 2 2 
-2 1 2 2 1 2 2 2 2 1 2 1 1 1 3 1 2 1 1 2 
-2 2 1 1 1 2 3 2 1 1 1 1 2 2 1 1 2 2 2 2 
-2 2 2 2 1 2 2 1 1 1 2 1 1 2 2 2 1 1 2 1 
-1 2 1 1 2 2 2 2 2 1 2 1 2 1 1 3 1 1 3 1 
+2 2 2 3 2 4 2 2 2 2 3 3 3 2 3 1 2 2 2 4 
+2 2 2 2 3 3 2 3 2 3 2 3 2 2 2 3 3 2 4 2 
+2 3 2 2 3 2 2 2 2 3 2 2 2 2 2 2 2 2 4 2 
+1 4 2 3 4 2 1 4 2 2 2 4 2 3 2 1 2 2 4 3 
+2 2 4 2 3 2 4 3 3 2 3 2 2 1 3 1 2 4 3 2 
+4 2 2 2 3 2 3 2 2 1 2 2 2 2 1 4 3 2 3 2 
+4 1 4 2 2 1 3 2 2 2 2 4 2 2 2 2 2 2 2 4 
+5 2 1 2 3 4 2 3 3 2 5 2 2 4 3 2 2 3 2 2 
+2 6 2 2 2 2 2 2 3 4 2 2 4 3 2 2 3 2 2 3 
+2 3 2 3 2 3 2 2 3 4 2 2 2 2 2 3 2 2 3 4 
 Variable Usage, last iteration (var:count):
-(1: 0) (2: 0) (3: 0) (4: 0) (5: 0) 
-(6: 0) (7: 135) 
+(1: 31) (2: 48) (3: 31) (4: 40) (5: 30) 
+(6: 111) 
 DONE BART 11-2-2014
 
 > 
@@ -165,5 +122,5 @@ DONE BART 11-2-2014
 > 
 > 
 > proc.time()
-    user   system  elapsed 
-1945.962   44.689 1992.333 
+     user    system   elapsed 
+29990.438   656.419 30649.832 

@@ -147,3 +147,17 @@ Try help(fields) to get started.
 +   accVals <- lapply(obj, \(x) x$acceptance)
 +   acc[i, ] <- Reduce("+", accVals) / length(accVals)
 + }
+> 
+> saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
+> mVals
+[1]   5  10  25  50 100
+> MSPE
+[1] 1.4113402 1.2599042 0.8843777 0.9604834 1.0135567
+> 
+> proc.time()
+     user    system   elapsed 
+  284.411   124.268 10026.870 
+Error in save(list = names(.GlobalEnv), file = outfile, version = version,  : 
+  error writing to connection
+Calls: sys.save.image -> save.image -> save
+Execution halted
