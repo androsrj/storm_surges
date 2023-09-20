@@ -65,8 +65,10 @@ mcmc <- function(X, Y, D, S,
   # Initial predictions for storm 1 (and non-transformed covariance matrix)
   BTest <<- exp(-theta * DTest)
   SigmaTest <<- exp(trSigma2[1]) * BTest + exp(trTau2[1]) * diag(nTest)
-  YPreds <- matrix(0, nrow = nTest, ncol = nIter) 
-  YPreds[ , 1] <- t(rmvnorm(1, mean = as.vector(XTest[[test_subjects]] %*% beta[ , 1]), sigma = SigmaTest))
+  YPreds <- lapply(test_subjects, matrix, data = NA, nrow = nTest, ncol = nIter)
+  for (j in test_subjects) {
+    YPreds[ , 1][[j]] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , 1]), sigma = SigmaTest))
+  }
   
   # Run Gibbs/Metropolis for one chain
   for (i in 2:nIter) {
@@ -137,7 +139,9 @@ mcmc <- function(X, Y, D, S,
     # Computationally expensive - only compute every 10th iteration
     if (i %% 10 == 0) {
       SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
-      YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[test_subjects]] %*% beta[ , i]), sigma = SigmaTest))
+      for (j in test_subjects) {
+        YPreds[ , i][[j]] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , i]), sigma = SigmaTest))
+      }
     }
   }
   
@@ -152,7 +156,7 @@ mcmc <- function(X, Y, D, S,
   trTau2 <- trTau2[index]
   #trTheta <- trTheta[index]
   beta <- beta[ , index]
-  YPreds <- YPreds[ , indexY]
+  YPreds <- lapply(test_subjects, \(j) YPreds[ , indexY][[j]])
   nSamples <- length(index)
   
   # Back-transform
@@ -192,7 +196,9 @@ mcmc <- function(X, Y, D, S,
                     beta = apply(beta, 1, quantile, 0.975))
   
   # Posterior predictive results for test data
-  preds <- apply(YPreds, 1, quantile, c(0.025, 0.5, 0.975))
+  preds <- lapply(test_subjects, function(j) {
+    apply(YPreds[[j]], 1, quantile, c(0.025, 0.5, 0.975))
+  })
   
   # Return results
   return(list(acceptance = acceptance, 
@@ -201,8 +207,7 @@ mcmc <- function(X, Y, D, S,
               credLower = credLower,
               credUpper = credUpper,
               preds = preds,
-	      predSamples = YPreds,
-	      m = m))
+              predSamples = YPreds))
 }
 
 
