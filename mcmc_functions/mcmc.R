@@ -2,7 +2,7 @@
 # Priors, Jacobians, likelihood, and posterior must already be sourced
 
 mcmc <- function(X, Y, D, S,
-                 nSubj, theta,
+                 theta, test_subjects,
                  model = c("full_gp", "mpp", "sparse_gpp")[1],
                  propSD = c(0.1, 0.1), 
                  nIter = 1000, nBurn = 100, nThin = 2,
@@ -11,6 +11,7 @@ mcmc <- function(X, Y, D, S,
   # Save model type and theta globally
   model <<- model
   theta <<- theta
+  nSubj <- ifelse(class(X) == "list", length(X), 1)
   subjs <<- 1:nSubj
   
   # Dimensions
@@ -65,7 +66,7 @@ mcmc <- function(X, Y, D, S,
   BTest <<- exp(-theta * DTest)
   SigmaTest <<- exp(trSigma2[1]) * BTest + exp(trTau2[1]) * diag(nTest)
   YPreds <- matrix(0, nrow = nTest, ncol = nIter) 
-  YPreds[ , 1] <- t(rmvnorm(1, mean = as.vector(XTest[[1]] %*% beta[ , 1]), sigma = SigmaTest))
+  YPreds[ , 1] <- t(rmvnorm(1, mean = as.vector(XTest[[test_subjects]] %*% beta[ , 1]), sigma = SigmaTest))
   
   # Run Gibbs/Metropolis for one chain
   for (i in 2:nIter) {
@@ -136,7 +137,7 @@ mcmc <- function(X, Y, D, S,
     # Computationally expensive - only compute every 10th iteration
     if (i %% 10 == 0) {
       SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
-      YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[test_subj]] %*% beta[ , i]), sigma = SigmaTest))
+      YPreds[ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[test_subjects]] %*% beta[ , i]), sigma = SigmaTest))
     }
   }
   

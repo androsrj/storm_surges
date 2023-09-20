@@ -64,8 +64,8 @@ DTest <- rdist(STest)
 # Helper function to run subsets in parallel for sketching
 sketching_parallel <- function(i) {
   results <- mcmc(X = X, Y = Y, D = D, S = S,
-                  nSubj = nSubj,
                   theta = thetaVals[i],
+                  test_subjects = test_subjects,
                   propSD = c(0.02, 0.02),
                   nIter = 2000, nBurn = 500,
                   model = model,

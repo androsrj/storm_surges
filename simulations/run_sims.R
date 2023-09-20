@@ -24,6 +24,7 @@ library(pracma) # For sparse matrix calculation
 nCores <- 10
 mySeed <- 1234
 nKnots <- 500
+propSD <- c(0.04, 0.3)
 
 # Load train and test data
 load("data/train.RData")

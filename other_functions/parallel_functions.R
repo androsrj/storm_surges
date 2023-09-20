@@ -5,8 +5,8 @@ DC_parallel <- function(i) {
                   Y = subsetsY[[i]],
                   D = subsetsD[[i]],
                   S = subsetsS[[i]],
-                  nSubj = nSubj,
                   theta = runif(1, 2, 4),
+                  test_subjects = test_subjects,
                   propSD = c(0.03, 0.1),
                   nIter = 2000, nBurn = 500,
                   model = model,
@@ -18,8 +18,8 @@ DC_parallel <- function(i) {
 sketching_parallel <- function(i) {
   path <- paste0("results/sketching/", model, "/rep", i, ".RDS")
   results <- mcmc(X = X, Y = Y, D = D, S = S,
-                  nSubj = nSubj,
                   theta = thetaVals[i],
+                  test_subjects = test_subjects,
                   propSD = propSD,
                   nIter = 2000, nBurn = 500,
                   model = model,

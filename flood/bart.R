@@ -56,7 +56,7 @@ if (file.exists(".RData")) {
 }
 gc()
 
-saveRDS(results, "results/flood_results_bart.RDS")
+#saveRDS(results, "results/flood_results_bart.RDS")
 
 #wassersteinMeans <- rowMeans(sapply(results, \(x) unlist(x$posteriorMedians)))
 #wassersteinLower <- rowMeans(sapply(results, \(x) unlist(x$credLower)))
