@@ -1,4 +1,3 @@
-# Clear environment and free unused memory
 rm(list = ls())
 gc()
 
@@ -23,7 +22,7 @@ indexTest <- indices[[2]]
 nTrain <- n <- length(indexTrain)
 nTest <- length(indexTest)
 
-storms <- 1:5
+storms <- 1:10
 Y <- lapply(storms, \(i) out[i, indexTrain])
 X <- lapply(storms, \(i) {
   Xintercept <- rep(1, nTrain)
@@ -44,20 +43,32 @@ XTest <- lapply(storms, \(i) {
   return(X)
 })
 
+
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt <- Sys.time()
 set.seed(mySeed)
-flood_results_bart <- foreach(i = 1:nCores, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])  
-final.time <- Sys.time() - strt 
+results <- foreach(i = storms, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])
+final.time <- Sys.time() - strt
 stopCluster(cl)
 if (file.exists(".RData")) {
   file.remove(".RData")
 }
 gc()
 
-saveRDS(flood_results_bart, paste0("results/flood_results_bart.RDS"))
+saveRDS(results, "results/flood_results_bart.RDS")
 
+#wassersteinMeans <- rowMeans(sapply(results, \(x) unlist(x$posteriorMedians)))
+#wassersteinLower <- rowMeans(sapply(results, \(x) unlist(x$credLower)))
+#wassersteinUpper <- rowMeans(sapply(results, \(x) unlist(x$credUpper)))
 
+#predsList <- lapply(results, \(x) x$preds)
+#predictions <- Reduce("+", predsList) / length(predsList)
 
+#flood_results_bart <- list(lower = wassersteinLower,
+#                           upper = wassersteinUpper,
+#                           predictions = predictions,
+#                           time = final.time)
+
+#saveRDS(flood_results_bart, "results/flood_results_bart.RDS")
 

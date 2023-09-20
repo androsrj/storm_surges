@@ -19,12 +19,10 @@ beta <- c(sketching$means['beta7'],
           sketching$upper[9])
 
 # BART predictions
-predIndex <- ((test_subj - 1) * nTest + 1):(test_subj * nTest)
-bartPreds <- flood_results_bart$yhat.test.mean[predIndex]
-bartCI <- unname(apply(flood_results_bart$yhat.test[predIndex], 2, quantile, c(0.025, 0.975)))
+bartPreds <- bart[[test_subj]]$yhat.test.mean
+bartCI <- apply(bart[[test_subj]]$yhat.test, 2, quantile, c(0.025, 0.975))
 bartLower <- bartCI[1, ]
 bartUpper <- bartCI[2, ]
-
 
 # Length
 lengthSketch <- mean(sketching$predictions[3,] - sketching$predictions[1,])
@@ -76,7 +74,7 @@ preds_df <- data.frame(cvg = cvg,
 		       length = length, 
 		       mspe = mspe, 
 		       score = score, 
-		       pct = pctCorrect)
+		       pct = pct)
 rownames(preds_df) <- c("Sketching", "BART")
 preds_df
 

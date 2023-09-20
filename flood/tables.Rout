@@ -17,9 +17,13 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > sketching <- readRDS("results/flood_results_sketching.RDS")
+> bart <- readRDS("results/flood_results_bart.RDS")
 > data_split <- readRDS("results/data_split.RDS")
 > indexTest <- data_split[[2]]
+> nTest <- length(indexTest)
 > load("data/flood_data.RData")
 > test_subj <- 1
 > trueTest <- out[test_subj, indexTest]
@@ -35,49 +39,78 @@ Type 'q()' to quit R.
 +           sketching$lower[9],
 +           sketching$upper[9])
 > 
+> # BART predictions
+> bartPreds <- bart[[test_subj]]$yhat.test.mean
+> bartCI <- apply(bart[[test_subj]]$yhat.test, 2, quantile, c(0.025, 0.975))
+> bartLower <- bartCI[1, ]
+> bartUpper <- bartCI[2, ]
+> 
 > # Length
-> length <- mean(sketching$predictions[3,] - sketching$predictions[1,])
+> lengthSketch <- mean(sketching$predictions[3,] - sketching$predictions[1,])
+> lengthBart <- mean(bartUpper - bartLower)
+> length <- c(lengthSketch, lengthBart)
 > 
 > # Coverage
-> cvg <- mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
+> cvgSketch <- mean(sketching$predictions[3,] > trueTest & sketching$predictions[1,] < trueTest)
+> cvgBart <- mean(bartUpper > trueTest & bartLower < trueTest)
+> cvg <- c(cvgSketch, cvgBart)
 > 
 > # MSPE
-> mspe <- mean((sketching$predictions[2,] - trueTest)^2)
+> mspeSketch <- mean((sketching$predictions[2,] - trueTest)^2)
+> mspeBart <- mean((bartPreds - trueTest)^2)
+> mspe <- c(mspeSketch, mspeBart)
 > 
 > # Interval score
 > a <- 0.05
-> score <- mean( (sketching$predictions[3, ] - sketching$predictions[1, ]) + 
-+                  2/a * (sketching$predictions[1, ] - trueTest[[test_subj]]) * 
-+                  (trueTest[[test_subj]] < sketching$predictions[1, ]) + 2/a * 
-+                  (trueTest[[test_subj]] - sketching$predictions[3, ]) * 
-+                  (trueTest[[test_subj]] > sketching$predictions[3, ]) ) 
+> scoreSketch <- mean( (sketching$predictions[3, ] - sketching$predictions[1, ]) + 
++                  2/a * (sketching$predictions[1, ] - trueTest) * 
++                  (trueTest < sketching$predictions[1, ]) + 
++                  2/a * (trueTest - sketching$predictions[3, ]) * 
++                  (trueTest > sketching$predictions[3, ]) ) 
+> scoreBart <- mean( (bartUpper - bartLower) +
++ 		   2/a * (bartLower - trueTest) *
++ 		   (trueTest < bartLower) + 
++ 		   2/a * (trueTest - bartUpper) * 
++ 		   (trueTest > bartUpper) )
+> score <- c(scoreSketch, scoreBart)
 > 
 > # Over/under 4 feet
 > trueFeet <- trueTest * 3.28084
-> predsFeet <- sketching$predictions[2, ] * 3.28084
+> sketchFeet <- sketching$predictions[2, ] * 3.28084
 > trueOver <- trueFeet >= 4.0
-> predOver <- predsFeet >= 4.0
-> pctCorrect <- mean(trueOver == predOver)
+> sketchOver <- sketchFeet >= 4.0
+> sketchPct <- mean(trueOver == sketchOver)
+> bartFeet <- bartPreds * 3.28084
+> bartOver <- bartFeet >= 4.0
+> bartPct <- mean(trueOver == bartOver)
+> pct <- c(sketchPct, bartPct)
 > 
-> # Final results table
-> final_df <- data.frame(sigma2, tau2, beta)
-> rownames(final_df) <- c("mean", "lower", "upper")
-> final_df
+> # Parameter estimates
+> params <- data.frame(sigma2, tau2, beta)
+> rownames(params) <- c("mean", "lower", "upper")
+> params
          sigma2      tau2       beta
-mean  0.6120697 0.2555053 -0.5798916
-lower 0.6088140 0.2544146 -0.5805844
-upper 0.6152034 0.2566420 -0.5792032
+mean  0.6600871 0.2389446 -0.5607228
+lower 0.6568259 0.2378406 -0.5614338
+upper 0.6634857 0.2400376 -0.5600037
 > 
-> # Predictive diagnostics
-> c(cvg = cvg, length = length, mspe = mspe, score = score, pct = pctCorrect)
-       cvg     length       mspe      score        pct 
- 0.9255833  3.5541309  1.1549321 25.3931891  0.8644409 
+> # Predictive diagnostics (our approach vs BART)
+> preds_df <- data.frame(cvg = cvg, 
++ 		       length = length, 
++ 		       mspe = mspe, 
++ 		       score = score, 
++ 		       pct = pct)
+> rownames(preds_df) <- c("Sketching", "BART")
+> preds_df
+                 cvg     length      mspe     score       pct
+Sketching 0.92719228 3.59706668 1.1538768  4.698468 0.8732904
+BART      0.05068383 0.09161665 0.5680024 21.072579 0.9456959
 > 
 > # Also make sure that acceptance rates are satisfactory
 > sketching$acc
  sigma2    tau2 
-0.26036 0.25028 
+0.25004 0.25412 
 > 
 > proc.time()
    user  system elapsed 
-  6.111   4.084  10.167 
+ 47.830   3.307  51.152 
