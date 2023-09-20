@@ -17,8 +17,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
 > source("../mcmc_functions/priors.R")
@@ -68,6 +66,8 @@ Try help(fields) to get started.
 > nCores <- 10
 > mySeed <- 1234
 > nKnots <- 500
+> propSD <- c(0.04, 0.3)
+> test_subjects <- 1:3
 > 
 > # Load train and test data
 > load("data/train.RData")
@@ -103,6 +103,7 @@ Try help(fields) to get started.
 > indices[[3]] <- multiplet(as.data.frame(cbind(X[[1]], Y[[1]])), k = nCores) # multiplets
 > indices[[4]] <- list2Vec(split(sample(1:n, n, replace = FALSE), as.factor(1:nCores))) # random
 > splits <- c("subdomains", "stratified", "multiplets", "random")
+> propSD <- c(0.03, 0.1)
 > 
 > # Get results for all 4 types of splits, both full GP and MPP
 > for (j in 1:4) {
@@ -136,7 +137,8 @@ Try help(fields) to get started.
 +   stopCluster(cl)
 +   
 +   # Wasserstein averages of quantiles across subsets
-+   DC_results_full_gp[[j]] <- wasserstein(nChains = nCores, 
++   DC_results_full_gp[[j]] <- wasserstein(results = obj,
++ 					 nChains = nCores, 
 +                                          method = "d_and_c",
 +                                          model = "full_gp",
 +                                          splitType = splitType,
@@ -159,7 +161,8 @@ Try help(fields) to get started.
 +   stopCluster(cl)
 +   
 +   # Wasserstein averages of quantiles across subsets
-+   DC_results_sparse_gp[[j]] <- wasserstein(nChains = nCores, 
++   DC_results_sparse_gp[[j]] <- wasserstein(results = obj,
++ 					   nChains = nCores, 
 +                                            method = "d_and_c",
 +                                            model = "sparse_gp",
 +                                            splitType = splitType,
@@ -190,86 +193,13 @@ Try help(fields) to get started.
 +   stopCluster(cl)
 +   
 +   # Wasserstein averages of quantiles across subsets
-+   DC_results_mpp[[j]] <- wasserstein(nChains = nCores, 
++   DC_results_mpp[[j]] <- wasserstein(results = obj,
++ 				     nChains = nCores, 
 +                                      method = "d_and_c", 
 +                                      model = "mpp",
 +                                      splitType = splitType,
 + 				     time = final.time)
 + }
-> 
-> saveRDS(DC_results_full_gp, "results/d_and_c/full_gp/final_results.RDS")
-> saveRDS(DC_results_sparse_gp, "results/d_and_c/sparse_gp/final_results.RDS")
-> saveRDS(DC_results_mpp, "results/d_and_c/mpp/final_results.RDS")
-> 
-> 
-> #######################################################
-> ############### RUN MCMC FOR SKETCHING ################
-> #######################################################
-> 
-> # Sequence of values for theta to iterate over
-> thetaVals <- seq(1, 5, length = nCores)
-> 
-> #### FULL GAUSSIAN PROCESS ####
-> model <- "full_gp"
-> 
-> # Parallel
-> cl <- makeCluster(nCores)
-> registerDoParallel(cl)
-> strt<-Sys.time()
-> set.seed(mySeed)
-> obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
-> final.time <- Sys.time() - strt 
-> stopCluster(cl)
-> 
-> # Wasserstein averages of quantiles across reps
-> sketching_results_full_gp <- wasserstein(nChains = nCores, 
-+                                          method = "sketching", 
-+                                          model = "full_gp",
-+                                          splitType = NULL,
-+                                          time = final.time)
-> saveRDS(sketching_results_full_gp, "results/sketching/full_gp/final_results.RDS")
-> 
-> #### SPARSE GAUSSIAN PROCESS ####
-> model <- "sparse_gp"
-> 
-> # Parallel
-> cl <- makeCluster(nCores)
-> registerDoParallel(cl)
-> strt<-Sys.time()
-> set.seed(mySeed)
-> obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "pracma")) %dopar% sketching_parallel(i)  
-> final.time <- Sys.time() - strt 
-> stopCluster(cl)
-> 
-> # Wasserstein averages of quantiles across reps
-> sketching_results_sparse_gp <- wasserstein(nChains = nCores, 
-+                                            method = "sketching", 
-+                                            model = "sparse_gp",
-+                                            splitType = NULL,
-+                                            time = final.time)
-> saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp/final_results.RDS")
-> 
-> #### MODIFIED PREDICTIVE PROCESS ####
-> model <- "mpp"
-> 
-> # Parallel
-> cl <- makeCluster(nCores)
-> registerDoParallel(cl)
-> strt<-Sys.time()
-> set.seed(mySeed)
-> obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "fields")) %dopar% sketching_parallel(i)  
-> final.time <- Sys.time() - strt 
-> stopCluster(cl)
-> 
-> # Wasserstein averages of quantiles across reps
-> sketching_results_mpp <- wasserstein(nChains = nCores, 
-+                                      method = "sketching", 
-+                                      model = "mpp",
-+                                      splitType = NULL,
-+                                      time = final.time)
-> saveRDS(sketching_results_mpp, "results/sketching/mpp/final_results.RDS")
-> 
-> 
-> proc.time()
-     user    system   elapsed 
-   66.149    16.371 97618.075 
+Error in f(init, x[[i]]) : non-numeric argument to binary operator
+Calls: wasserstein -> Reduce
+Execution halted

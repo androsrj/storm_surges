@@ -25,6 +25,7 @@ nCores <- 10
 mySeed <- 1234
 nKnots <- 500
 propSD <- c(0.04, 0.3)
+test_subjects <- 1:3
 
 # Load train and test data
 load("data/train.RData")
@@ -60,6 +61,7 @@ indices[[2]] <- list2Vec(partition(indices[[1]], p = rep(1/nCores, nCores))) # s
 indices[[3]] <- multiplet(as.data.frame(cbind(X[[1]], Y[[1]])), k = nCores) # multiplets
 indices[[4]] <- list2Vec(split(sample(1:n, n, replace = FALSE), as.factor(1:nCores))) # random
 splits <- c("subdomains", "stratified", "multiplets", "random")
+propSD <- c(0.03, 0.1)
 
 # Get results for all 4 types of splits, both full GP and MPP
 for (j in 1:4) {
@@ -93,7 +95,8 @@ for (j in 1:4) {
   stopCluster(cl)
   
   # Wasserstein averages of quantiles across subsets
-  DC_results_full_gp[[j]] <- wasserstein(nChains = nCores, 
+  DC_results_full_gp[[j]] <- wasserstein(results = obj,
+					 nChains = nCores, 
                                          method = "d_and_c",
                                          model = "full_gp",
                                          splitType = splitType,
@@ -116,7 +119,8 @@ for (j in 1:4) {
   stopCluster(cl)
   
   # Wasserstein averages of quantiles across subsets
-  DC_results_sparse_gp[[j]] <- wasserstein(nChains = nCores, 
+  DC_results_sparse_gp[[j]] <- wasserstein(results = obj,
+					   nChains = nCores, 
                                            method = "d_and_c",
                                            model = "sparse_gp",
                                            splitType = splitType,
@@ -147,7 +151,8 @@ for (j in 1:4) {
   stopCluster(cl)
   
   # Wasserstein averages of quantiles across subsets
-  DC_results_mpp[[j]] <- wasserstein(nChains = nCores, 
+  DC_results_mpp[[j]] <- wasserstein(results = obj,
+				     nChains = nCores, 
                                      method = "d_and_c", 
                                      model = "mpp",
                                      splitType = splitType,
@@ -180,7 +185,8 @@ final.time <- Sys.time() - strt
 stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
-sketching_results_full_gp <- wasserstein(nChains = nCores, 
+sketching_results_full_gp <- wasserstein(results = obj,
+					 nChains = nCores, 
                                          method = "sketching", 
                                          model = "full_gp",
                                          splitType = NULL,
@@ -200,7 +206,8 @@ final.time <- Sys.time() - strt
 stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
-sketching_results_sparse_gp <- wasserstein(nChains = nCores, 
+sketching_results_sparse_gp <- wasserstein(results = obj,
+					   nChains = nCores, 
                                            method = "sketching", 
                                            model = "sparse_gp",
                                            splitType = NULL,
@@ -220,7 +227,8 @@ final.time <- Sys.time() - strt
 stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
-sketching_results_mpp <- wasserstein(nChains = nCores, 
+sketching_results_mpp <- wasserstein(results = obj,
+				     nChains = nCores, 
                                      method = "sketching", 
                                      model = "mpp",
                                      splitType = NULL,

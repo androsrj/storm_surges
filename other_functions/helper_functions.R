@@ -1,10 +1,10 @@
 ### Wasserstein mean for multiple Markov chains (multiple distributions) 
-wasserstein <- function(nChains, method, model, splitType, time, alpha = 0.05) {
-  results <- vector("list", nChains)
-  rootPath <- paste0("results/", method, "/", model, "/", splitType, "/rep")
-  for (i in 1:nChains) {
-    results[[i]] <- readRDS(paste0(rootPath, i, ".RDS"))
-  }
+wasserstein <- function(results, nChains, method, model, splitType, time, alpha = 0.05) {
+  #results <- vector("list", nChains)
+  #rootPath <- paste0("results/", method, "/", model, "/", splitType, "/rep")
+  #for (i in 1:nChains) {
+  #  results[[i]] <- readRDS(paste0(rootPath, i, ".RDS"))
+  #}
   wassersteinAcc <- rowMeans(sapply(results, \(x) unlist(x$acceptance)))
   wassersteinMeans <- rowMeans(sapply(results, \(x) unlist(x$posteriorMedians)))
   wassersteinLower <- rowMeans(sapply(results, \(x) unlist(x$credLower)))

@@ -67,7 +67,7 @@ mcmc <- function(X, Y, D, S,
   SigmaTest <<- exp(trSigma2[1]) * BTest + exp(trTau2[1]) * diag(nTest)
   YPreds <- lapply(test_subjects, matrix, data = NA, nrow = nTest, ncol = nIter)
   for (j in test_subjects) {
-    YPreds[ , 1][[j]] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , 1]), sigma = SigmaTest))
+    YPreds[[j]][ , 1] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , 1]), sigma = SigmaTest))
   }
   
   # Run Gibbs/Metropolis for one chain
@@ -140,7 +140,7 @@ mcmc <- function(X, Y, D, S,
     if (i %% 10 == 0) {
       SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
       for (j in test_subjects) {
-        YPreds[ , i][[j]] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , i]), sigma = SigmaTest))
+        YPreds[[j]][ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , i]), sigma = SigmaTest))
       }
     }
   }
@@ -156,7 +156,7 @@ mcmc <- function(X, Y, D, S,
   trTau2 <- trTau2[index]
   #trTheta <- trTheta[index]
   beta <- beta[ , index]
-  YPreds <- lapply(test_subjects, \(j) YPreds[ , indexY][[j]])
+  YPreds <- lapply(test_subjects, \(j) YPreds[[j]][ , indexY])
   nSamples <- length(index)
   
   # Back-transform
