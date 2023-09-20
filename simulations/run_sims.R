@@ -24,7 +24,6 @@ library(pracma) # For sparse matrix calculation
 nCores <- 10
 mySeed <- 1234
 nKnots <- 500
-propSD <- c(0.04, 0.3)
 test_subjects <- 1:3
 
 # Load train and test data
@@ -96,10 +95,6 @@ for (j in 1:4) {
   
   # Wasserstein averages of quantiles across subsets
   DC_results_full_gp[[j]] <- wasserstein(results = obj,
-					 nChains = nCores, 
-                                         method = "d_and_c",
-                                         model = "full_gp",
-                                         splitType = splitType,
                                          time = final.time)
   
   #### SPARSE GAUSSIAN PROCESS ####
@@ -120,10 +115,6 @@ for (j in 1:4) {
   
   # Wasserstein averages of quantiles across subsets
   DC_results_sparse_gp[[j]] <- wasserstein(results = obj,
-					   nChains = nCores, 
-                                           method = "d_and_c",
-                                           model = "sparse_gp",
-                                           splitType = splitType,
                                            time = final.time)
   
   #### MODIFIED PREDICTIVE PROCESS ####
@@ -132,14 +123,6 @@ for (j in 1:4) {
   if (!dir.exists(dir.path)) {
     dir.create(dir.path)
   }
-  
-  #subsetsX <- lapply(1:nCores, function(k) { 
-  #  lapply(1:nSubj, function(s) X[[s]][c(which(index == k), (nTrain + 1):nObs), ])
-  #})
-  #subsetsY <- lapply(1:nCores, function(k) { 
-  #  lapply(1:nSubj, function(s) Y[[s]][c(which(index == k), (nTrain + 1):nObs)])
-  #})
-  #subsetsD <- lapply(1:nCores, function(k) D[c(which(index == k), (nTrain + 1):nObs), c(which(index == k), (nTrain + 1):nObs)])
   
   # Parallel
   cl <- makeCluster(nCores)
@@ -152,11 +135,7 @@ for (j in 1:4) {
   
   # Wasserstein averages of quantiles across subsets
   DC_results_mpp[[j]] <- wasserstein(results = obj,
-				     nChains = nCores, 
-                                     method = "d_and_c", 
-                                     model = "mpp",
-                                     splitType = splitType,
-				     time = final.time)
+                                     time = final.time)
 }
 
 saveRDS(DC_results_full_gp, "results/d_and_c/full_gp/final_results.RDS")
@@ -170,6 +149,7 @@ saveRDS(DC_results_mpp, "results/d_and_c/mpp/final_results.RDS")
 
 # Sequence of values for theta to iterate over
 thetaVals <- seq(1, 5, length = nCores)
+propSD <- c(0.04, 0.3)
 mProp <- 0.05
 
 #### FULL GAUSSIAN PROCESS ####
@@ -186,10 +166,6 @@ stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
 sketching_results_full_gp <- wasserstein(results = obj,
-					 nChains = nCores, 
-                                         method = "sketching", 
-                                         model = "full_gp",
-                                         splitType = NULL,
                                          time = final.time)
 saveRDS(sketching_results_full_gp, "results/sketching/full_gp/final_results.RDS")
 
@@ -207,10 +183,6 @@ stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
 sketching_results_sparse_gp <- wasserstein(results = obj,
-					   nChains = nCores, 
-                                           method = "sketching", 
-                                           model = "sparse_gp",
-                                           splitType = NULL,
                                            time = final.time)
 saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp/final_results.RDS")
 
@@ -228,10 +200,6 @@ stopCluster(cl)
 
 # Wasserstein averages of quantiles across reps
 sketching_results_mpp <- wasserstein(results = obj,
-				     nChains = nCores, 
-                                     method = "sketching", 
-                                     model = "mpp",
-                                     splitType = NULL,
                                      time = final.time)
 saveRDS(sketching_results_mpp, "results/sketching/mpp/final_results.RDS")
 
