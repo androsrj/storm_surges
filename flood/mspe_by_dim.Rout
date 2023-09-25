@@ -17,14 +17,12 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells 275574 14.8     787354   42.1    350000   18.7
-Vcells 462598  3.6  192843372 1471.3 200275819 1528.0
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 273690 14.7     660857 35.3   451905 24.2
+Vcells 459126  3.6    8388608 64.0  1800280 13.8
 > 
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
@@ -32,8 +30,8 @@ Vcells 462598  3.6  192843372 1471.3 200275819 1528.0
 > source("../mcmc_functions/jacobians.R")
 > source("../mcmc_functions/likelihood.R")
 > source("../mcmc_functions/posterior.R")
-> source("../other_functions/sparse.R") # For sparse GP
 > source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
+> source("../other_functions/parallel_functions.R")
 > 
 > # Libraries
 > library(parallel) # For parallel computation
@@ -108,25 +106,14 @@ Try help(fields) to get started.
 > STest <- as.matrix(coords[indexTest, 1:2])
 > DTest <- rdist(STest)
 > 
-> # Helper function to run subsets in parallel for sketching
-> sketching_parallel <- function(i) {
-+   results <- mcmc(X = X, Y = Y, D = D, S = S,
-+                   nSubj = nSubj,
-+                   theta = thetaVals[i],
-+                   propSD = c(0.02, 0.02),
-+                   nIter = 2000, nBurn = 500,
-+                   model = model,
-+                   mProp = mProp,
-+                   transform = TRUE)
-+   results
-+ }
-> 
 > mVals <- c(5, 10, 25, 50, 100)
 > mPropVals <- mVals / n
 > nSubj <- length(X)
 > thetaVals <- seq(10, 100, length = totalCores)
 > model <- "full_gp"
-> test_subj <- 1
+> test_subjects <- 1:10
+> propSD <- c(0.01, 0.01)
+> 
 > MSPE <- numeric(length(mVals))
 > acc <- matrix(0, nrow = length(mVals), ncol = 2)
 > 
@@ -141,23 +128,30 @@ Try help(fields) to get started.
 +   final.time <- Sys.time() - strt 
 +   stopCluster(cl)
 +   
-+   predsList <- lapply(obj, \(x) x$preds)
-+   predictions <- Reduce("+", predsList) / length(predsList)
-+   MSPE[i] <- mean((predictions[2, ] - YTest[[test_subj]])^2)
 +   accVals <- lapply(obj, \(x) x$acceptance)
 +   acc[i, ] <- Reduce("+", accVals) / length(accVals)
++ 
++   for (j in test_subjects) {
++     predsList <- lapply(obj, \(x) x$preds[[j]])
++     predictions <- Reduce("+", predsList) / length(predsList)
++     MSPE[i] <- MSPE[i] + mean((predictions[2, ] - YTest[[j]])^2)
++   }
++   MSPE[i] <- MSPE[i] / length(test_subjects)
 + }
 > 
 > saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
 > mVals
 [1]   5  10  25  50 100
 > MSPE
-[1] 1.4113402 1.2599042 0.8843777 0.9604834 1.0135567
+[1] 1.0205352 1.0387102 0.9562436 0.9054634 1.0172350
+> acc
+       [,1]   [,2]
+[1,] 0.2036 0.6140
+[2,] 0.3848 0.4510
+[3,] 0.2756 0.2400
+[4,] 0.2866 0.2058
+[5,] 0.2888 0.2022
 > 
 > proc.time()
      user    system   elapsed 
-  284.411   124.268 10026.870 
-Error in save(list = names(.GlobalEnv), file = outfile, version = version,  : 
-  error writing to connection
-Calls: sys.save.image -> save.image -> save
-Execution halted
+  229.408    82.891 70075.142 

@@ -22,9 +22,9 @@ Type 'q()' to quit R.
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells 275574 14.8     787354   42.1    350000   18.7
-Vcells 462598  3.6  192843372 1471.3 200275819 1528.0
+         used (Mb) gc trigger   (Mb)   max used   (Mb)
+Ncells 275678 14.8     787651   42.1     350000   18.7
+Vcells 462982  3.6 1149481737 8769.9 1200726602 9160.9
 > 
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
@@ -75,6 +75,7 @@ Try help(fields) to get started.
 > nCores <- 2
 > totalCores <- 10
 > mySeed <- 999
+> test_subjects <- 1:10
 > 
 > # Randomly sample indices for train and test data
 > nObs <- nrow(coords)
@@ -119,7 +120,6 @@ Try help(fields) to get started.
 > mProp <- 0.01
 > propSD <- c(0.01, 0.01)
 > nSubj <- length(storms)
-> test_subj <- 1
 > 
 > cl <- makeCluster(nCores)
 > registerDoParallel(cl)
@@ -131,16 +131,11 @@ Try help(fields) to get started.
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
-[1] TRUE
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1975137   105.5    3222168   172.1    3222168   172.1
-Vcells 2459559587 18765.0 3533935756 26961.8 2462225858 18785.3
-> flood_results_sketching <- wasserstein(nChains = totalCores, 
-+                                        method = "sketching", 
-+                                        model = "full_gp", 
-+                                        splitType = NULL, 
-+                                        time = final.time)
+Ncells    1976462   105.6    3216770   171.8    3216770   171.8
+Vcells 2510027450 19150.0 3533935932 26961.8 2512696545 19170.4
+> flood_results_sketching <- wasserstein(results = obj, time = final.time)
 > saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 > 
 > 
@@ -204,9 +199,5 @@ Vcells 2459559587 18765.0 3533935756 26961.8 2462225858 18785.3
 > 
 > 
 > proc.time()
-     user    system   elapsed 
-   82.942    28.178 54855.973 
-Error in save(list = names(.GlobalEnv), file = outfile, version = version,  : 
-  error writing to connection
-Calls: sys.save.image -> save.image -> save
-Execution halted
+      user     system    elapsed 
+   118.078     24.927 125897.863 

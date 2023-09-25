@@ -15,6 +15,7 @@ sketch_full_gp$acc
 sketch_mpp$acc
 sketch_sparse_gp$acc
 
+test_subjects <- 1:3
 model <- rep(c("Full_GP", "MPP", "Sparse_GP"), each = 5)
 splitType <- rep(c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"), 3)
 
@@ -135,38 +136,41 @@ beta2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[5]),
 
 #######################################################################
 
-lowerPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[1, ])), 
-                    sketch_full_gp$predictions[1, ],
-                    t(sapply(DC_mpp, \(x) x$predictions[1, ])), 
-                    sketch_mpp$predictions[1, ],
-                    t(sapply(DC_sparse_gp, \(x) x$predictions[1, ])),
-                    sketch_sparse_gp$predictions[1, ])
+MSPE <- cvg_ind <- score <- numeric(15)
 
-upperPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[3, ])), 
-                    sketch_full_gp$predictions[3, ],
-                    t(sapply(DC_mpp, \(x) x$predictions[3, ])), 
-                    sketch_mpp$predictions[3, ],
-                    t(sapply(DC_sparse_gp, \(x) x$predictions[3, ])),
-                    sketch_sparse_gp$predictions[3, ])
+for (i in test_subjects) {
+  lowerPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[i]][1, ])),
+		      sketch_full_gp$predictions[[i]][1, ],
+		      t(sapply(DC_mpp, \(x) x$predictions[[i]][1, ])),
+                      sketch_mpp$predictions[[i]][1, ],
+		      t(sapply(DC_sparse_gp, \(x) x$predictions[[i]][1, ])),
+                      sketch_sparse_gp$predictions[[i]][1, ])
+  upperPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[i]][3, ])),
+                      sketch_full_gp$predictions[[i]][3, ],
+                      t(sapply(DC_mpp, \(x) x$predictions[[i]][3, ])),
+                      sketch_mpp$predictions[[i]][3, ],
+                      t(sapply(DC_sparse_gp, \(x) x$predictions[[i]][3, ])),
+                      sketch_sparse_gp$predictions[[i]][3, ])
+  pointPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[i]][2, ])),
+                      sketch_full_gp$predictions[[i]][2, ],
+                      t(sapply(DC_mpp, \(x) x$predictions[[i]][2, ])),
+                      sketch_mpp$predictions[[i]][2, ],
+                      t(sapply(DC_sparse_gp, \(x) x$predictions[[i]][2, ])),
+                      sketch_sparse_gp$predictions[[i]][2, ])
 
-pointPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[2, ])), 
-                    sketch_full_gp$predictions[2, ],
-                    t(sapply(DC_mpp, \(x) x$predictions[2, ])), 
-                    sketch_mpp$predictions[2, ],
-                    t(sapply(DC_sparse_gp, \(x) x$predictions[2, ])),
-                    sketch_sparse_gp$predictions[2, ])
-
-test_subj <- 1
-MSPE <- apply(pointPreds, 1, \(x) mean((x - test$Y[[test_subj]])^2))
-cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y[[test_subj]] & upperPreds[i, ] >= test$Y[[test_subj]])
+  MSPE <- MSPE + apply(pointPreds, 1, \(x) mean((x - test$Y[[i]])^2))
+  cvg_ind <- cvg_ind + sapply(1:15, \(j) lowerPreds[j, ] <= test$Y[[i]] & upperPreds[j, ] >= test$Y[[i]])
+  a <- .05
+  score <- score + sapply(1:15, \(j) mean( (upperPreds[j,] - lowerPreds[j,]) +
+                                   2/a * (lowerPreds[j,] - test$Y[[i]]) *
+                                   (test$Y[[i]] < lowerPreds[j,]) + 2/a *
+                                   (test$Y[[i]] - upperPreds[j,]) *
+                                   (test$Y[[i]] > upperPreds[j,]) ) )
+}
+MSPE <- MSPE / length(test_subjects)
+cvg_ind <- cvg_ind / length(test_subjects)
 coverage <- apply(cvg_ind, 2, mean)
-length <- apply(upperPreds - lowerPreds, 1, mean)
-a <- .05
-score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 
-                                   2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * 
-                                   (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * 
-                                   (test$Y[[test_subj]] - upperPreds[i,]) * 
-                                   (test$Y[[test_subj]] > upperPreds[i,]) ) )
+score <- score / length(test_subjects)
 
 df <- data.frame(model, splitType,
                  sigma2Mean, sigma2Lower, sigma2Upper,
@@ -174,6 +178,6 @@ df <- data.frame(model, splitType,
                  beta1Mean, beta1Lower, beta1Upper,
                  beta2Mean, beta2Lower, beta2Upper,
 		 gammaMean, gammaLower, gammaUpper,
-                 MSPE, coverage, length, score)
+                 MSPE, coverage, score)
 
 df

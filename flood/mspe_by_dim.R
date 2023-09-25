@@ -8,8 +8,8 @@ source("../mcmc_functions/priors.R")
 source("../mcmc_functions/jacobians.R")
 source("../mcmc_functions/likelihood.R")
 source("../mcmc_functions/posterior.R")
-source("../other_functions/sparse.R") # For sparse GP
 source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
+source("../other_functions/parallel_functions.R")
 
 # Libraries
 library(parallel) # For parallel computation
@@ -61,25 +61,14 @@ XTest <- lapply(storms, \(i) {
 STest <- as.matrix(coords[indexTest, 1:2])
 DTest <- rdist(STest)
 
-# Helper function to run subsets in parallel for sketching
-sketching_parallel <- function(i) {
-  results <- mcmc(X = X, Y = Y, D = D, S = S,
-                  theta = thetaVals[i],
-                  test_subjects = test_subjects,
-                  propSD = c(0.02, 0.02),
-                  nIter = 2000, nBurn = 500,
-                  model = model,
-                  mProp = mProp,
-                  transform = TRUE)
-  results
-}
-
 mVals <- c(5, 10, 25, 50, 100)
 mPropVals <- mVals / n
 nSubj <- length(X)
 thetaVals <- seq(10, 100, length = totalCores)
 model <- "full_gp"
-test_subj <- 1
+test_subjects <- 1:10
+propSD <- c(0.01, 0.01)
+
 MSPE <- numeric(length(mVals))
 acc <- matrix(0, nrow = length(mVals), ncol = 2)
 
@@ -94,13 +83,18 @@ for (i in 1:length(mVals)) {
   final.time <- Sys.time() - strt 
   stopCluster(cl)
   
-  predsList <- lapply(obj, \(x) x$preds)
-  predictions <- Reduce("+", predsList) / length(predsList)
-  MSPE[i] <- mean((predictions[2, ] - YTest[[test_subj]])^2)
   accVals <- lapply(obj, \(x) x$acceptance)
   acc[i, ] <- Reduce("+", accVals) / length(accVals)
+
+  for (j in test_subjects) {
+    predsList <- lapply(obj, \(x) x$preds[[j]])
+    predictions <- Reduce("+", predsList) / length(predsList)
+    MSPE[i] <- MSPE[i] + mean((predictions[2, ] - YTest[[j]])^2)
+  }
+  MSPE[i] <- MSPE[i] / length(test_subjects)
 }
 
 saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
 mVals
 MSPE
+acc

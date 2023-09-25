@@ -8,7 +8,7 @@ DC_parallel <- function(i) {
                   theta = runif(1, 2, 4),
                   test_subjects = test_subjects,
                   propSD = propSD,
-                  nIter = 200, nBurn = 50,
+                  nIter = 2000, nBurn = 500,
                   model = model,
                   transform = FALSE)
   #saveRDS(results, path)
@@ -22,7 +22,7 @@ sketching_parallel <- function(i) {
                   theta = thetaVals[i],
                   test_subjects = test_subjects,
                   propSD = propSD,
-                  nIter = 200, nBurn = 50,
+                  nIter = 2000, nBurn = 500,
                   model = model,
                   mProp = mProp,
                   transform = TRUE)

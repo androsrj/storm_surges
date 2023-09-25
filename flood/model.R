@@ -28,6 +28,7 @@ load("data/flood_data.RData")
 nCores <- 2
 totalCores <- 10
 mySeed <- 999
+test_subjects <- 1:10
 
 # Randomly sample indices for train and test data
 nObs <- nrow(coords)
@@ -72,7 +73,6 @@ model <- "full_gp"
 mProp <- 0.01
 propSD <- c(0.01, 0.01)
 nSubj <- length(storms)
-test_subj <- 1
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
@@ -85,11 +85,7 @@ if (file.exists(".RData")) {
   file.remove(".RData")
 }
 gc()
-flood_results_sketching <- wasserstein(nChains = totalCores, 
-                                       method = "sketching", 
-                                       model = "full_gp", 
-                                       splitType = NULL, 
-                                       time = final.time)
+flood_results_sketching <- wasserstein(results = obj, time = final.time)
 saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 
 

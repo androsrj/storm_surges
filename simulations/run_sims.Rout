@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
 > source("../mcmc_functions/priors.R")
@@ -66,8 +68,7 @@ Try help(fields) to get started.
 > nCores <- 10
 > mySeed <- 1234
 > nKnots <- 500
-> propSD <- c(0.04, 0.3)
-> test_subjects <- 1:3
+> test_subjects <- 1:5
 > 
 > # Load train and test data
 > load("data/train.RData")
@@ -138,10 +139,6 @@ Try help(fields) to get started.
 +   
 +   # Wasserstein averages of quantiles across subsets
 +   DC_results_full_gp[[j]] <- wasserstein(results = obj,
-+ 					 nChains = nCores, 
-+                                          method = "d_and_c",
-+                                          model = "full_gp",
-+                                          splitType = splitType,
 +                                          time = final.time)
 +   
 +   #### SPARSE GAUSSIAN PROCESS ####
@@ -162,10 +159,6 @@ Try help(fields) to get started.
 +   
 +   # Wasserstein averages of quantiles across subsets
 +   DC_results_sparse_gp[[j]] <- wasserstein(results = obj,
-+ 					   nChains = nCores, 
-+                                            method = "d_and_c",
-+                                            model = "sparse_gp",
-+                                            splitType = splitType,
 +                                            time = final.time)
 +   
 +   #### MODIFIED PREDICTIVE PROCESS ####
@@ -174,14 +167,6 @@ Try help(fields) to get started.
 +   if (!dir.exists(dir.path)) {
 +     dir.create(dir.path)
 +   }
-+   
-+   #subsetsX <- lapply(1:nCores, function(k) { 
-+   #  lapply(1:nSubj, function(s) X[[s]][c(which(index == k), (nTrain + 1):nObs), ])
-+   #})
-+   #subsetsY <- lapply(1:nCores, function(k) { 
-+   #  lapply(1:nSubj, function(s) Y[[s]][c(which(index == k), (nTrain + 1):nObs)])
-+   #})
-+   #subsetsD <- lapply(1:nCores, function(k) D[c(which(index == k), (nTrain + 1):nObs), c(which(index == k), (nTrain + 1):nObs)])
 +   
 +   # Parallel
 +   cl <- makeCluster(nCores)
@@ -194,12 +179,5 @@ Try help(fields) to get started.
 +   
 +   # Wasserstein averages of quantiles across subsets
 +   DC_results_mpp[[j]] <- wasserstein(results = obj,
-+ 				     nChains = nCores, 
-+                                      method = "d_and_c", 
-+                                      model = "mpp",
-+                                      splitType = splitType,
-+ 				     time = final.time)
++                                      time = final.time)
 + }
-Error in f(init, x[[i]]) : non-numeric argument to binary operator
-Calls: wasserstein -> Reduce
-Execution halted

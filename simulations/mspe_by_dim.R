@@ -4,8 +4,8 @@ source("../mcmc_functions/priors.R")
 source("../mcmc_functions/jacobians.R")
 source("../mcmc_functions/likelihood.R")
 source("../mcmc_functions/posterior.R")
-source("../other_functions/sparse.R") # For sparse GP
 source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
+source("../other_functions/parallel_functions.R")
 
 # Libraries
 library(parallel) # For parallel computation
@@ -16,7 +16,7 @@ library(mvtnorm)
 
 # Number of clusters for parallel implementation
 nCores <- 10
-mySeed <- 1234
+mySeed <- 9999
 
 # Load train and test data
 load("data/train.RData")
@@ -32,27 +32,15 @@ XTest <- test$X
 YTest <- test$Y
 STest <- test$S
 DTest <- test$D
-
-# Helper function to run subsets in parallel for sketching
-sketching_parallel <- function(i) {
-  results <- mcmc(X = X, Y = Y, D = D, S = S,
-                  theta = thetaVals[i],
-                  test_subjects = test_subjects,
-                  propSD = c(0.04, 0.3),
-                  nIter = 2000, nBurn = 500,
-                  model = model,
-                  mProp = mProp,
-                  transform = TRUE)
-  results
-}
-
-mVals <- c(5, 10, 25, 50, 100, 250, 500)
+  
+mVals <- c(1, 2, 5, 10, 25, 50, 100, 250, 500)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"
-test_subj <- nSubj
+test_subjects <- 1:10
+propSD <- c(0.05, 0.25)
 MSPE <- numeric(length(mVals))
-mTrue <- matrix(0, nrow = length(mVals), ncol = nCores)
+acc <- matrix(0, nrow = length(mVals), ncol = 2)
 
 for (i in 1:length(mVals)) {
   mProp <- mPropVals[[i]]
@@ -64,14 +52,19 @@ for (i in 1:length(mVals)) {
   obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
   final.time <- Sys.time() - strt 
   stopCluster(cl)
+
+  accVals <- lapply(obj, \(x) x$acceptance)
+  acc[i, ] <- Reduce("+", accVals) / length(accVals)
   
-  predsList <- lapply(obj, \(x) x$preds)
-  predictions <- Reduce("+", predsList) / length(predsList)
-  MSPE[i] <- mean((predictions[2, ] - test$Y[[test_subj]])^2)
-  mTrue[i, ] <- sapply(obj, \(x) x$m)
+  for (j in test_subjects) {
+    predsList <- lapply(obj, \(x) x$preds[[j]])
+    predictions <- Reduce("+", predsList) / length(predsList)
+    MSPE[i] <- MSPE[i] + mean((predictions[2, ] - test$Y[[j]])^2)
+  }
+  MSPE[i] <- MSPE[i] / length(test_subjects)
 }
 
 saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
 mVals
 MSPE
-mTrue
+acc
