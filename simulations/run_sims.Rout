@@ -181,3 +181,73 @@ Try help(fields) to get started.
 +   DC_results_mpp[[j]] <- wasserstein(results = obj,
 +                                      time = final.time)
 + }
+> 
+> saveRDS(DC_results_full_gp, "results/d_and_c/full_gp/final_results.RDS")
+> saveRDS(DC_results_sparse_gp, "results/d_and_c/sparse_gp/final_results.RDS")
+> saveRDS(DC_results_mpp, "results/d_and_c/mpp/final_results.RDS")
+> 
+> 
+> #######################################################
+> ############### RUN MCMC FOR SKETCHING ################
+> #######################################################
+> 
+> # Sequence of values for theta to iterate over
+> thetaVals <- seq(1, 5, length = nCores)
+> propSD <- c(0.04, 0.3)
+> mProp <- 0.05
+> 
+> #### FULL GAUSSIAN PROCESS ####
+> model <- "full_gp"
+> 
+> # Parallel
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt<-Sys.time()
+> set.seed(mySeed)
+> obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
+> final.time <- Sys.time() - strt 
+> stopCluster(cl)
+> 
+> # Wasserstein averages of quantiles across reps
+> sketching_results_full_gp <- wasserstein(results = obj,
++                                          time = final.time)
+> saveRDS(sketching_results_full_gp, "results/sketching/full_gp/final_results.RDS")
+> 
+> #### SPARSE GAUSSIAN PROCESS ####
+> model <- "sparse_gp"
+> 
+> # Parallel
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt<-Sys.time()
+> set.seed(mySeed)
+> obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "pracma")) %dopar% sketching_parallel(i)  
+> final.time <- Sys.time() - strt 
+> stopCluster(cl)
+> 
+> # Wasserstein averages of quantiles across reps
+> sketching_results_sparse_gp <- wasserstein(results = obj,
++                                            time = final.time)
+> saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp/final_results.RDS")
+> 
+> #### MODIFIED PREDICTIVE PROCESS ####
+> model <- "mpp"
+> 
+> # Parallel
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt<-Sys.time()
+> set.seed(mySeed)
+> obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "fields")) %dopar% sketching_parallel(i)  
+> final.time <- Sys.time() - strt 
+> stopCluster(cl)
+> 
+> # Wasserstein averages of quantiles across reps
+> sketching_results_mpp <- wasserstein(results = obj,
++                                      time = final.time)
+> saveRDS(sketching_results_mpp, "results/sketching/mpp/final_results.RDS")
+> 
+> 
+> proc.time()
+      user     system    elapsed 
+    66.998     18.673 101765.187 

@@ -13,8 +13,9 @@ test_subj <- 1
 trueY <- colMeans(out)[indexTest]
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], trueY), no.X=100, no.Y=100, extend=T)$xyz.est
 pdf("../figures/storm1_truth.pdf")
-par(cex = 1.5)
-image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev=TRUE), legend.lab = "Water Level (meters)", legend.cex = 2)
+par(cex = 1.5, oma = c(0, 0, 0, 0.75))
+image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev=TRUE), 
+	   legend.lab = "Water Level (meters)", legend.cex = 2, legend.mar = 5)
 dev.off()
 
 # Surface plot for estimated water level of storm 1 at testing data points (sketching) 

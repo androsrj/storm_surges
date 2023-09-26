@@ -33,7 +33,7 @@ YTest <- test$Y
 STest <- test$S
 DTest <- test$D
   
-mVals <- c(1, 2, 5, 10, 25, 50, 100, 250, 500)
+mVals <- c(1, 2, 5, 10, 25, 50, 100, 200, 300, 400, 500)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"

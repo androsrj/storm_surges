@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > library(MBA)
 > library(fields)
 Loading required package: spam
@@ -49,8 +51,9 @@ Try help(fields) to get started.
 > trueY <- colMeans(out)[indexTest]
 > pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], trueY), no.X=100, no.Y=100, extend=T)$xyz.est
 > pdf("../figures/storm1_truth.pdf")
-> par(cex = 1.5)
-> image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev=TRUE), legend.lab = "Water Level (meters)", legend.cex = 2)
+> par(cex = 1.5, oma = c(0, 0, 0, 0.75))
+> image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "terrain", rev=TRUE), 
++ 	   legend.lab = "Water Level (meters)", legend.cex = 2, legend.mar = 5)
 > dev.off()
 null device 
           1 
@@ -100,11 +103,4 @@ pdf
 > 
 > proc.time()
    user  system elapsed 
- 30.364   2.268  32.972 
-Error in save.image(name) : 
-  image could not be renamed and is left in .RDataTmp1
-Calls: sys.save.image -> save.image
-In addition: Warning message:
-In file.rename(outfile, file) :
-  cannot rename file '.RDataTmp1' to '.RData', reason 'No such file or directory'
-Execution halted
+ 57.576   4.061  61.925 
