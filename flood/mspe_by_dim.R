@@ -61,7 +61,7 @@ XTest <- lapply(storms, \(i) {
 STest <- as.matrix(coords[indexTest, 1:2])
 DTest <- rdist(STest)
 
-mVals <- c(5, 10, 25, 50, 100)
+mVals <- c(5, 10, 25, 50, 100, 250, 500)
 mPropVals <- mVals / n
 nSubj <- length(X)
 thetaVals <- seq(10, 100, length = totalCores)
