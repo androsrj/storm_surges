@@ -26,24 +26,25 @@ nTest <- length(indexTest)
 storms <- 1:10
 Y <- lapply(storms, \(i) out[i, indexTrain])
 X <- lapply(storms, \(i) {
-  Xintercept <- rep(1, nTrain)
+  #Xintercept <- rep(1, nTrain)
   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
   Xelev <- coords$elev_meters[indexTrain]
-  X <- cbind(Xintercept, Xstorm, Xelev)
+  X <- cbind(Xstorm, Xelev)
   colnames(X) <- c("int", colnames(inputs), "elev")
   return(X)
 })
+S <- coords[indexTrain, 1:2]
 
 YTest <- lapply(storms, \(i) out[i, indexTest])
 XTest <- lapply(storms, \(i) {
-  Xintercept <- rep(1, nTest)
+  #Xintercept <- rep(1, nTest)
   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
   Xelev <- coords$elev_meters[indexTest]
-  X <- cbind(Xintercept, Xstorm, Xelev)
+  X <- cbind(Xstorm, Xelev)
   colnames(X) <- c("int", colnames(inputs), "elev")
   return(X)
 })
-
+STest <- coords[indexTest, 1:2]
 
 ## BART
 cl <- makeCluster(nCores)
@@ -71,16 +72,14 @@ cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt <- Sys.time()
 set.seed(mySeed)
-results <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], 
-                                                                    coords=coords, 
-                                                                    starting=starting, 
-                                                                    method="latent", 
-                                                                    n.neighbors=10,
-                                                                    tuning=tuning, 
-                                                                    priors=priors, 
-                                                                    cov.model=cov.model,
-                                                                    n.samples=nIter, 
-                                                                    n.omp.threads=1)
+nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
+                                                                     starting=starting, method="latent", 
+                                                                     n.neighbors=10, tuning=tuning, 
+                                                                     priors=priors, cov.model=cov.model,
+                                                                     n.samples=nIter, n.omp.threads=1)
+nngp_preds <- foreach(i = storms, .packages="spNNGP") %dopar% predict(nngp_obj[[i]], 
+                                                                      XTest[[i]], 
+                                                                      STest)
 final.time <- Sys.time() - strt
 stopCluster(cl)
 if (file.exists(".RData")) {
@@ -88,4 +87,4 @@ if (file.exists(".RData")) {
 }
 gc()
 
-saveRDS(results, "results/flood_results_nngp.RDS")
+saveRDS(list(obj = nngp_obj, preds = nngp_preds), "results/flood_results_nngp.RDS")
