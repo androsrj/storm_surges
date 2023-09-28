@@ -68,18 +68,22 @@ starting <- list("phi"=20, "sigma.sq"=1, "tau.sq"=0.2)
 tuning <- list("phi"=5, "sigma.sq"=5, "tau.sq"=2)
 priors <- list("phi.Unif"=c(1,100), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
 
+# Remove global attributes from X train and test
+X <- lapply(storms, \(i) coords$elev_meters[indexTrain])
+XTest <- lapply(storms, \(i) coords$elev_meters[indexTest])
+
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt <- Sys.time()
 set.seed(mySeed)
-nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]][,6], coords=S, 
+nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
                                                                      starting=starting, method="latent", 
                                                                      n.neighbors=10, tuning=tuning, 
                                                                      priors=priors, cov.model=cov.model,
                                                                      n.samples=nIter, n.omp.threads=1)
 nngp_preds <- foreach(i = storms, .packages="spNNGP") %dopar% predict(nngp_obj[[i]], 
-                                                                      XTest[[i]][,6], 
-                                                                      STest)
+                                                                      matrix(c(rep(1, nTest), XTest[[i]]), ncol = 2), 
+                                                                      as.matrix(STest))
 final.time <- Sys.time() - strt
 stopCluster(cl)
 if (file.exists(".RData")) {
