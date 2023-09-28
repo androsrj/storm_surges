@@ -30,7 +30,7 @@ X <- lapply(storms, \(i) {
   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
   Xelev <- coords$elev_meters[indexTrain]
   X <- cbind(Xstorm, Xelev)
-  colnames(X) <- c("int", colnames(inputs), "elev")
+  colnames(X) <- c(colnames(inputs), "elev")
   return(X)
 })
 S <- coords[indexTrain, 1:2]
@@ -41,44 +41,44 @@ XTest <- lapply(storms, \(i) {
   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
   Xelev <- coords$elev_meters[indexTest]
   X <- cbind(Xstorm, Xelev)
-  colnames(X) <- c("int", colnames(inputs), "elev")
+  colnames(X) <- c(colnames(inputs), "elev")
   return(X)
 })
 STest <- coords[indexTest, 1:2]
 
 ## BART
-cl <- makeCluster(nCores)
-registerDoParallel(cl)
-strt <- Sys.time()
-set.seed(mySeed)
-results <- foreach(i = storms, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])
-final.time <- Sys.time() - strt
-stopCluster(cl)
+#cl <- makeCluster(nCores)
+#registerDoParallel(cl)
+#strt <- Sys.time()
+#set.seed(mySeed)
+#results <- foreach(i = storms, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])
+#final.time <- Sys.time() - strt
+#stopCluster(cl)
 if (file.exists(".RData")) {
   file.remove(".RData")
 }
 gc()
 
-saveRDS(results, "results/flood_results_bart.RDS")
+#saveRDS(results, "results/flood_results_bart.RDS")
 
 ## NNGP
 nIter <- 1000
 cov.model <- "exponential"
-starting <- list("phi"=2, "sigma.sq"=2, "tau.sq"=0.2)
+starting <- list("phi"=20, "sigma.sq"=1, "tau.sq"=0.2)
 tuning <- list("phi"=5, "sigma.sq"=5, "tau.sq"=2)
-priors <- list("phi.Unif"=c(1,5), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
+priors <- list("phi.Unif"=c(1,100), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt <- Sys.time()
 set.seed(mySeed)
-nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
+nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]][,6], coords=S, 
                                                                      starting=starting, method="latent", 
                                                                      n.neighbors=10, tuning=tuning, 
                                                                      priors=priors, cov.model=cov.model,
                                                                      n.samples=nIter, n.omp.threads=1)
 nngp_preds <- foreach(i = storms, .packages="spNNGP") %dopar% predict(nngp_obj[[i]], 
-                                                                      XTest[[i]], 
+                                                                      XTest[[i]][,6], 
                                                                       STest)
 final.time <- Sys.time() - strt
 stopCluster(cl)

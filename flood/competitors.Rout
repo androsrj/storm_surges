@@ -30,6 +30,10 @@ Loading required package: foreach
 Loading required package: iterators
 > library(foreach) # For parallel computation
 > library(BayesTree) # For BART
+> library(spNNGP) # For NNGP
+Loading required package: coda
+Loading required package: Formula
+Loading required package: RANN
 > 
 > # Read in
 > load("data/flood_data.RData")
@@ -38,7 +42,7 @@ Loading required package: iterators
 > nCores <- 10
 > mySeed <- 123
 > 
-> # Randomly sample indices for train and test data
+> # Read in indices for train and test data
 > nObs <- nrow(coords)
 > indices <- readRDS("results/data_split.RDS")
 > indexTrain <- indices[[1]]
@@ -49,57 +53,65 @@ Loading required package: iterators
 > storms <- 1:10
 > Y <- lapply(storms, \(i) out[i, indexTrain])
 > X <- lapply(storms, \(i) {
-+   Xintercept <- rep(1, nTrain)
++   #Xintercept <- rep(1, nTrain)
 +   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
 +   Xelev <- coords$elev_meters[indexTrain]
-+   X <- cbind(Xintercept, Xstorm, Xelev)
-+   colnames(X) <- c("int", colnames(inputs), "elev")
++   X <- cbind(Xstorm, Xelev)
++   colnames(X) <- c(colnames(inputs), "elev")
 +   return(X)
 + })
+> S <- coords[indexTrain, 1:2]
 > 
 > YTest <- lapply(storms, \(i) out[i, indexTest])
 > XTest <- lapply(storms, \(i) {
-+   Xintercept <- rep(1, nTest)
++   #Xintercept <- rep(1, nTest)
 +   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
 +   Xelev <- coords$elev_meters[indexTest]
-+   X <- cbind(Xintercept, Xstorm, Xelev)
-+   colnames(X) <- c("int", colnames(inputs), "elev")
++   X <- cbind(Xstorm, Xelev)
++   colnames(X) <- c(colnames(inputs), "elev")
 +   return(X)
 + })
+> STest <- coords[indexTest, 1:2]
 > 
-> 
-> cl <- makeCluster(nCores)
-> registerDoParallel(cl)
-> strt <- Sys.time()
-> set.seed(mySeed)
-> results <- foreach(i = storms, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])
-> final.time <- Sys.time() - strt
-> stopCluster(cl)
+> ## BART
+> #cl <- makeCluster(nCores)
+> #registerDoParallel(cl)
+> #strt <- Sys.time()
+> #set.seed(mySeed)
+> #results <- foreach(i = storms, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])
+> #final.time <- Sys.time() - strt
+> #stopCluster(cl)
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
 > gc()
             used   (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells    366014   19.6     660857   35.3    540700   28.9
-Vcells 701911624 5355.2  869773821 6635.9 701963655 5355.6
+Ncells    381366   20.4     660857   35.3    657238   35.2
+Vcells 203343885 1551.4  289978942 2212.4 211880333 1616.6
 > 
-> saveRDS(results, "results/flood_results_bart.RDS")
+> #saveRDS(results, "results/flood_results_bart.RDS")
 > 
-> #wassersteinMeans <- rowMeans(sapply(results, \(x) unlist(x$posteriorMedians)))
-> #wassersteinLower <- rowMeans(sapply(results, \(x) unlist(x$credLower)))
-> #wassersteinUpper <- rowMeans(sapply(results, \(x) unlist(x$credUpper)))
+> ## NNGP
+> nIter <- 1000
+> cov.model <- "exponential"
+> starting <- list("phi"=20, "sigma.sq"=1, "tau.sq"=0.2)
+> tuning <- list("phi"=5, "sigma.sq"=5, "tau.sq"=2)
+> priors <- list("phi.Unif"=c(1,100), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
 > 
-> #predsList <- lapply(results, \(x) x$preds)
-> #predictions <- Reduce("+", predsList) / length(predsList)
-> 
-> #flood_results_bart <- list(lower = wassersteinLower,
-> #                           upper = wassersteinUpper,
-> #                           predictions = predictions,
-> #                           time = final.time)
-> 
-> #saveRDS(flood_results_bart, "results/flood_results_bart.RDS")
-> 
-> 
-> proc.time()
-    user   system  elapsed 
- 128.385    7.073 3018.314 
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt <- Sys.time()
+> set.seed(mySeed)
+> nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]][,6], coords=S, 
++                                                                      starting=starting, method="latent", 
++                                                                      n.neighbors=10, tuning=tuning, 
++                                                                      priors=priors, cov.model=cov.model,
++                                                                      n.samples=nIter, n.omp.threads=1)
+> nngp_preds <- foreach(i = storms, .packages="spNNGP") %dopar% predict(nngp_obj[[i]], 
++                                                                       XTest[[i]][,6], 
++                                                                       STest)
+Error in predict(nngp_obj[[i]], XTest[[i]][, 6], STest) : 
+  task 1 failed - "error: X.0 must be a data.frame or matrix
+"
+Calls: %dopar% -> <Anonymous>
+Execution halted
