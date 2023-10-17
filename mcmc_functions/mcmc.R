@@ -135,13 +135,10 @@ mcmc <- function(X, Y, D, S,
     meanBeta <- (n / m) * SigmaBetaInv %*% Reduce("+", meanBetaList)
     beta[ , i] <- t(rmvnorm(1, meanBeta, SigmaBetaInv))
     
-    ### Posterior predictive sampling for storm 1 ###
-    # Computationally expensive - only compute every 10th iteration
-    if (i %% 10 == 0) {
-      SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
-      for (j in test_subjects) {
-        YPreds[[j]][ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , i]), sigma = SigmaTest))
-      }
+    ### Posterior predictive sampling for test subjects ###
+    SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
+    for (j in test_subjects) {
+      YPreds[[j]][ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , i]), sigma = SigmaTest))
     }
   }
   
@@ -151,12 +148,11 @@ mcmc <- function(X, Y, D, S,
   
   # Remove burn-in and perform thinning
   index <- seq(nBurn + 1, nIter, by = nThin)
-  indexY <- seq(nBurn + 10, nIter, by = 10)
   trSigma2 <- trSigma2[index]
   trTau2 <- trTau2[index]
   #trTheta <- trTheta[index]
   beta <- beta[ , index]
-  YPreds <- lapply(test_subjects, \(j) YPreds[[j]][ , indexY])
+  YPreds <- lapply(test_subjects, \(j) YPreds[[j]][ , index])
   nSamples <- length(index)
   
   # Back-transform

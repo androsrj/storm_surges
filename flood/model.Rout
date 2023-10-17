@@ -17,12 +17,14 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger (Mb) max used (Mb)
-Ncells 273690 14.7     660857 35.3   451905 24.2
-Vcells 459126  3.6    8388608 64.0  1800280 13.8
+         used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells 275750 14.8     505371   27.0    505371   27.0
+Vcells 462712  3.6  530294460 4045.9 551870464 4210.5
 > 
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
@@ -72,12 +74,12 @@ Try help(fields) to get started.
 > # Clusters and seed
 > nCores <- 2
 > totalCores <- 10
-> mySeed <- 999
-> test_subjects <- 1:10
+> mySeed <- 1997
+> test_subjects <- 1:2
 > 
 > # Randomly sample indices for train and test data
 > nObs <- nrow(coords)
-> pctTrain <- 0.95
+> pctTrain <- 0.99
 > n <- nTrain <- floor(pctTrain * nObs)
 > nTest <- ceiling((1 - pctTrain) * nObs)
 > set.seed(mySeed)
@@ -86,7 +88,7 @@ Try help(fields) to get started.
 > saveRDS(list(indexTrain, indexTest), "results/data_split.RDS")
 > 
 > # Divide using train and test indices
-> storms <- 1:50
+> storms <- 1:10
 > Y <- lapply(storms, \(i) out[i, indexTrain])
 > X <- lapply(storms, \(i) {
 +   Xintercept <- rep(1, nTrain)
@@ -113,10 +115,10 @@ Try help(fields) to get started.
 > 
 > 
 > # Sketching
-> thetaVals <- seq(1, 10, length = totalCores)
+> thetaVals <- seq(10^5, 10^6, length = totalCores)
 > model <- "full_gp"
 > mProp <- 0.01
-> propSD <- c(0.01, 0.01)
+> propSD <- c(0.01, 0.14)
 > nSubj <- length(storms)
 > 
 > cl <- makeCluster(nCores)
@@ -132,8 +134,8 @@ Try help(fields) to get started.
 [1] TRUE
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1976344   105.6    3775814   201.7    2729401   145.8
-Vcells 2510027328 19150.0 3533935556 26961.8 2512696587 19170.4
+Ncells    1974784   105.5    3385965   180.9    3385965   180.9
+Vcells 2639457075 20137.5 3788526646 28904.2 2640082696 20142.3
 > flood_results_sketching <- wasserstein(results = obj, time = final.time)
 > saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 > 
@@ -198,5 +200,5 @@ Vcells 2510027328 19150.0 3533935556 26961.8 2512696587 19170.4
 > 
 > 
 > proc.time()
-      user     system    elapsed 
-    70.674     21.607 114970.976 
+    user   system  elapsed 
+  94.983   25.387 7904.238 

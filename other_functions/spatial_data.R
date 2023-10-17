@@ -30,14 +30,14 @@ spatialData <- function(n, X, Z,
   W <- t(rmvnorm(1, sigma = C))
   
   # Sample epsilon
-  eps <- rnorm(n, 0, sqrt(tau2))
+  #eps <- rnorm(n, 0, sqrt(tau2))
   
   # Generate Y
   nSubj <- length(Z)
   n <- nrow(X)
   #Y <- lapply(1:nSubj, \(i) X %*% beta + rep(Z[i], n) * gamma + W + eps)
   X <- lapply(1:nSubj, \(i) cbind(rep(Z[i], n), X))
-  Y <- lapply(1:nSubj, \(i) X[[i]] %*% c(gamma, beta) + W + eps)
+  Y <- lapply(1:nSubj, \(i) X[[i]] %*% c(gamma, beta) + W + rnorm(n, 0, sqrt(tau2)))
   
   # Return data
   return(list(X = X, Y = Y, W = as.vector(W), D = D, S = S))

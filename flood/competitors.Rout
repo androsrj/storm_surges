@@ -17,11 +17,13 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger (Mb) max used (Mb)
-Ncells 273690 14.7     660857 35.3   451905 24.2
-Vcells 459126  3.6    8388608 64.0  1800280 13.8
+         used (Mb) gc trigger   (Mb)   max used   (Mb)
+Ncells 275608 14.8     506697   27.1     506697   27.1
+Vcells 462929  3.6 1056132336 8057.7 1200193280 9156.8
 > 
 > # Libraries
 > library(parallel) # For parallel computation
@@ -43,75 +45,93 @@ Loading required package: RANN
 > mySeed <- 123
 > 
 > # Read in indices for train and test data
-> nObs <- nrow(coords)
+> n <- nrow(coords)
 > indices <- readRDS("results/data_split.RDS")
 > indexTrain <- indices[[1]]
 > indexTest <- indices[[2]]
-> nTrain <- n <- length(indexTrain)
+> nTrain <- length(indexTrain)
 > nTest <- length(indexTest)
 > 
-> storms <- 1:10
-> Y <- lapply(storms, \(i) out[i, indexTrain])
+> storms <- 1:5
+> stormsTest <- 6:10
+> Y <- lapply(storms, \(i) out[i, ])
 > X <- lapply(storms, \(i) {
-+   #Xintercept <- rep(1, nTrain)
-+   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
-+   Xelev <- coords$elev_meters[indexTrain]
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
++   Xelev <- coords$elev_meters #[indexTrain]
 +   X <- cbind(Xstorm, Xelev)
 +   colnames(X) <- c(colnames(inputs), "elev")
 +   return(X)
 + })
-> S <- coords[indexTrain, 1:2]
+> S <- coords[ , 1:2]
 > 
-> YTest <- lapply(storms, \(i) out[i, indexTest])
-> XTest <- lapply(storms, \(i) {
-+   #Xintercept <- rep(1, nTest)
-+   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
-+   Xelev <- coords$elev_meters[indexTest]
+> YTest <- lapply(stormsTest, \(i) out[i, ])
+> XTest <- lapply(stormsTest, \(i) {
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
++   Xelev <- coords$elev_meters #[indexTest]
 +   X <- cbind(Xstorm, Xelev)
 +   colnames(X) <- c(colnames(inputs), "elev")
 +   return(X)
 + })
-> STest <- coords[indexTest, 1:2]
+> #STest <- coords[indexTest, 1:2]
 > 
 > ## BART
-> #cl <- makeCluster(nCores)
-> #registerDoParallel(cl)
-> #strt <- Sys.time()
-> #set.seed(mySeed)
-> #results <- foreach(i = storms, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])
-> #final.time <- Sys.time() - strt
-> #stopCluster(cl)
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt <- Sys.time()
+> set.seed(mySeed)
+> results <- foreach(i = storms, .packages = "BayesTree") %dopar% bart(X[[i]], Y[[i]], XTest[[i]])
+> final.time <- Sys.time() - strt
+> stopCluster(cl)
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
 > gc()
-            used   (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells    381366   20.4     660857   35.3    657238   35.2
-Vcells 203343885 1551.4  289978942 2212.4 211880333 1616.6
+            used   (Mb) gc trigger   (Mb)   max used   (Mb)
+Ncells    399205   21.4     887237   47.4     506697   27.1
+Vcells 701216034 5349.9 1056132336 8057.7 1200193280 9156.8
 > 
-> #saveRDS(results, "results/flood_results_bart.RDS")
+> saveRDS(results, "results/flood_results_bart.RDS")
 > 
 > ## NNGP
-> nIter <- 1000
+> nIter <- 2000
 > cov.model <- "exponential"
-> starting <- list("phi"=20, "sigma.sq"=1, "tau.sq"=0.2)
-> tuning <- list("phi"=5, "sigma.sq"=5, "tau.sq"=2)
-> priors <- list("phi.Unif"=c(1,100), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
+> starting <- list("phi"=5, "sigma.sq"=1, "tau.sq"=0.2)
+> tuning <- list("phi"=0.1, "sigma.sq"=5, "tau.sq"=2)
+> priors <- list("phi.Unif"=c(1,20), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
+> 
+> # Remove global attributes from X train and test
+> X <- lapply(storms, \(i) coords$elev_meters)
+> XTest <- lapply(stormsTest, \(i) coords$elev_meters)
 > 
 > cl <- makeCluster(nCores)
 > registerDoParallel(cl)
 > strt <- Sys.time()
 > set.seed(mySeed)
-> nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]][,6], coords=S, 
+> nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
 +                                                                      starting=starting, method="latent", 
 +                                                                      n.neighbors=10, tuning=tuning, 
 +                                                                      priors=priors, cov.model=cov.model,
-+                                                                      n.samples=nIter, n.omp.threads=1)
-> nngp_preds <- foreach(i = storms, .packages="spNNGP") %dopar% predict(nngp_obj[[i]], 
-+                                                                       XTest[[i]][,6], 
-+                                                                       STest)
-Error in predict(nngp_obj[[i]], XTest[[i]][, 6], STest) : 
-  task 1 failed - "error: X.0 must be a data.frame or matrix
-"
-Calls: %dopar% -> <Anonymous>
-Execution halted
++                                                                      n.samples=nIter, n.omp.threads=1, fit.rep=TRUE)
+> gc()
+             used    (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells     454411    24.3     887237    47.4     508185    27.2
+Vcells 1696952905 12946.8 2445917896 18660.9 1696957022 12946.8
+> #nngp_preds <- foreach(i = stormsTest, .packages="spNNGP") %dopar% predict(nngp_obj[[i - 5]], 
+> #                                                                      matrix(c(rep(1, n), XTest[[i - 5]]), ncol = 2), 
+> #                                                                      as.matrix(S))
+> final.time <- Sys.time() - strt
+> stopCluster(cl)
+> if (file.exists(".RData")) {
++   file.remove(".RData")
++ }
+> gc()
+             used    (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells     454411    24.3     887237    47.4     508185    27.2
+Vcells 1696952905 12946.8 2445917896 18660.9 1696964547 12946.9
+> 
+> #saveRDS(list(obj = nngp_obj, preds = nngp_preds), "results/flood_results_nngp.RDS")
+> saveRDS(nngp_obj, "results/flood_results_nngp.RDS")
+> 
+> proc.time()
+    user   system  elapsed 
+ 562.220   27.751 4605.130 

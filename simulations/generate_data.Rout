@@ -84,4 +84,4 @@ Try help(fields) to get started.
 > 
 > proc.time()
    user  system elapsed 
- 52.771   1.391  55.205 
+ 80.174   3.756  89.021 

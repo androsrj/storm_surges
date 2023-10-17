@@ -17,14 +17,12 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells 275880 14.8     788228    42.1     350000    18.7
-Vcells 463086  3.6 2408242503 18373.5 2507944460 19134.1
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 273690 14.7     660857 35.3   451905 24.2
+Vcells 459126  3.6    8388608 64.0  1800280 13.8
 > 
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
@@ -32,8 +30,8 @@ Vcells 463086  3.6 2408242503 18373.5 2507944460 19134.1
 > source("../mcmc_functions/jacobians.R")
 > source("../mcmc_functions/likelihood.R")
 > source("../mcmc_functions/posterior.R")
+> source("../other_functions/parallel_functions.R") # Parallel wrapper functions
 > source("../other_functions/helper_functions.R") # Other misc functions (not part of MCMC)
-> source("../other_functions/parallel_functions.R")
 > 
 > # Libraries
 > library(parallel) # For parallel computation
@@ -41,7 +39,8 @@ Vcells 463086  3.6 2408242503 18373.5 2507944460 19134.1
 Loading required package: foreach
 Loading required package: iterators
 > library(foreach) # For parallel computation
-> library(fields) # Distance matrix calculation
+> library(mvtnorm)
+> library(fields)
 Loading required package: spam
 Spam version 2.9-1 (2022-08-07) is loaded.
 Type 'help( Spam)' or 'demo( spam)' for a short introduction 
@@ -63,7 +62,9 @@ Loading required package: viridis
 Loading required package: viridisLite
 
 Try help(fields) to get started.
-> library(mvtnorm)
+> library(MBA)
+> library(anticlust) # for balanced clustering
+> library(splitTools) # for stratified splitting
 > 
 > # Read in
 > load("data/flood_data.RData")
@@ -71,33 +72,33 @@ Try help(fields) to get started.
 > # Clusters and seed
 > nCores <- 2
 > totalCores <- 10
-> mySeed <- 123
+> mySeed <- 1997
+> test_subjects <- 6:10
 > 
 > # Randomly sample indices for train and test data
-> nObs <- nrow(coords)
-> pctTrain <- 0.95
-> n <- nTrain <- floor(pctTrain * nObs)
-> nTest <- ceiling((1 - pctTrain) * nObs)
+> n <- nrow(coords)
+> pctTest <- 0.01
+> nTest <- floor(pctTest * n)
 > set.seed(mySeed)
-> indexTrain <- readRDS("results/data_split.RDS")[[1]]
-> indexTest <- readRDS("results/data_split.RDS")[[2]]
+> indexTest <- sort(sample(1:n, nTest))
+> saveRDS(indexTest, "results/test_points.RDS")
 > 
 > # Divide using train and test indices
-> storms <- 1:50
-> Y <- lapply(storms, \(i) out[i, indexTrain])
+> storms <- 1:5
+> Y <- lapply(storms, \(i) out[i, ])
 > X <- lapply(storms, \(i) {
-+   Xintercept <- rep(1, nTrain)
-+   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTrain), ncol = 5, byrow = TRUE)
-+   Xelev <- coords$elev_meters[indexTrain]
++   Xintercept <- rep(1, n)
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
++   Xelev <- coords$elev_meters
 +   X <- cbind(Xintercept, Xstorm, Xelev)
 +   colnames(X) <- c("int", colnames(inputs), "elev")
 +   return(X)
 + })
-> S <- as.matrix(coords[indexTrain, 1:2])
+> S <- as.matrix(coords[ , 1:2])
 > D <- rdist(S)
 > 
-> YTest <- lapply(storms, \(i) out[i, indexTest])
-> XTest <- lapply(storms, \(i) {
+> YTest <- lapply(test_subjects, \(i) out[i, indexTest])
+> XTest <- lapply(test_subjects, \(i) {
 +   Xintercept <- rep(1, nTest)
 +   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
 +   Xelev <- coords$elev_meters[indexTest]
@@ -108,40 +109,20 @@ Try help(fields) to get started.
 > STest <- as.matrix(coords[indexTest, 1:2])
 > DTest <- rdist(STest)
 > 
-> mVals <- c(5, 10, 25, 50, 100, 250, 500)
-> mPropVals <- mVals / n
-> nSubj <- length(X)
-> thetaVals <- seq(10, 100, length = totalCores)
+> 
+> # Sketching
+> thetaVals <- seq(10^5, 10^6, length = totalCores)
 > model <- "full_gp"
-> test_subjects <- 1:10
-> propSD <- c(0.01, 0.01)
+> mProp <- 0.01
+> propSD <- c(0.01, 0.14)
+> nSubj <- length(storms)
 > 
-> MSPE <- numeric(length(mVals))
-> acc <- matrix(0, nrow = length(mVals), ncol = 2)
-> 
-> for (i in 1:length(mVals)) {
-+   mProp <- mPropVals[[i]]
-+   
-+   cl <- makeCluster(nCores)
-+   registerDoParallel(cl)
-+   strt <- Sys.time()
-+   set.seed(mySeed)
-+   obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
-+   final.time <- Sys.time() - strt 
-+   stopCluster(cl)
-+   
-+   accVals <- lapply(obj, \(x) x$acceptance)
-+   acc[i, ] <- Reduce("+", accVals) / length(accVals)
-+ 
-+   for (j in test_subjects) {
-+     predsList <- lapply(obj, \(x) x$preds[[j]])
-+     predictions <- Reduce("+", predsList) / length(predsList)
-+     MSPE[i] <- MSPE[i] + mean((predictions[2, ] - YTest[[j]])^2)
-+   }
-+   MSPE[i] <- MSPE[i] / length(test_subjects)
-+ }
-Error in unserialize(socklist[[n]]) : error reading from connection
-Calls: %dopar% ... recvOneData -> recvOneData.SOCKcluster -> unserialize
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt <- Sys.time()
+> set.seed(mySeed)
+> obj <- foreach(i = storms, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
+Error in sketching_parallel(i) : 
+  task 1 failed - "subscript out of bounds"
+Calls: %dopar% -> <Anonymous>
 Execution halted
-Warning message:
-system call failed: Cannot allocate memory 
