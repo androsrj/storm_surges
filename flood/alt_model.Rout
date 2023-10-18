@@ -77,7 +77,7 @@ Try help(fields) to get started.
 > 
 > # Randomly sample indices for train and test data
 > n <- nrow(coords)
-> pctTest <- 0.01
+> pctTest <- 0.02
 > nTest <- floor(pctTest * n)
 > set.seed(mySeed)
 > indexTest <- sort(sample(1:n, nTest))
@@ -114,15 +114,88 @@ Try help(fields) to get started.
 > thetaVals <- seq(10^5, 10^6, length = totalCores)
 > model <- "full_gp"
 > mProp <- 0.01
-> propSD <- c(0.01, 0.14)
+> propSD <- c(0.03, 0.14)
 > nSubj <- length(storms)
+> nTestSubj <- length(test_subjects)
 > 
 > cl <- makeCluster(nCores)
 > registerDoParallel(cl)
 > strt <- Sys.time()
 > set.seed(mySeed)
 > obj <- foreach(i = storms, .packages = "mvtnorm") %dopar% sketching_parallel(i)  
-Error in sketching_parallel(i) : 
-  task 1 failed - "subscript out of bounds"
-Calls: %dopar% -> <Anonymous>
-Execution halted
+> final.time <- Sys.time() - strt 
+> stopCluster(cl)
+> if (file.exists(".RData")) {
++   file.remove(".RData")
++ }
+[1] TRUE
+> gc()
+             used    (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells    1974574   105.5    3775820   201.7    2729371   145.8
+Vcells 2702407989 20617.8 3856603346 29423.6 2703010910 20622.4
+> flood_results_sketching <- wasserstein(results = obj, time = final.time)
+> saveRDS(flood_results_sketching, paste0("results/flood_results_alt.RDS"))
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> # D&C, subdomain split
+> #indexSubd <- balanced_clustering(STrain, totalCores)
+> #subsetsX <- lapply(1:totalCores, function(k) { 
+> #  lapply(storms, function(s) XTrain[[s]][which(indexSubd == k), ])
+> #  })
+> #subsetsY <- lapply(1:totalCores, function(k) { 
+> #  lapply(storms, function(s) YTrain[[s]][which(indexSubd == k)])
+> #})
+> #subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexSubd == k), which(indexSubd == k)])
+> #
+> #cl <- makeCluster(nCores)
+> #registerDoParallel(cl)
+> #strt <- Sys.time()
+> #set.seed(mySeed)
+> #obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% subdomains_parallel(i)  
+> #final.time <- Sys.time() - strt 
+> #stopCluster(cl)
+> #if (file.exists(".RData")) {
+> #  file.remove(".RData")
+> #}
+> #gc()
+> #flood_results_subdomains <- wasserstein(nChains = totalCores, method = "subdomains")
+> #saveRDS(flood_results_subdomains, paste0("results/flood_results_subdomains.RDS"))
+> 
+> 
+> 
+> # D&C, stratified split
+> #indexStrat <- list2Vec(partition(indexSubd, p = rep(1/nCores, totalCores)))
+> #subsetsX <- lapply(1:totalCores, function(k) { 
+> #  lapply(storms, function(s) XTrain[[s]][which(indexStrat == k), ])
+> #})
+> #subsetsY <- lapply(1:totalCores, function(k) { 
+> #  lapply(storms, function(s) YTrain[[s]][which(indexStrat == k)])
+> #})
+> #subsetsD <- lapply(1:totalCores, function(k) DTrain[which(indexStrat == k), which(indexStrat == k)])
+> #
+> #cl <- makeCluster(nCores)
+> #registerDoParallel(cl)
+> #strt <- Sys.time()
+> #set.seed(mySeed)
+> #obj <- foreach(i = 1:totalCores, .packages = "mvtnorm") %dopar% stratified_parallel(i)  
+> #final.time <- Sys.time() - strt 
+> #stopCluster(cl)
+> #if (file.exists(".RData")) {
+> #  file.remove(".RData")
+> #}
+> #gc()
+> #flood_results_stratified <- wasserstein(nChains = totalCores, method = "stratified")
+> #saveRDS(flood_results_stratified, paste0("results/flood_results_stratified.RDS"))
+> 
+> 
+> 
+> proc.time()
+     user    system   elapsed 
+   68.898    14.133 16305.760 

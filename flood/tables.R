@@ -1,12 +1,15 @@
-sketching <- readRDS("results/flood_results_sketching.RDS")
+sketching <- readRDS("results/flood_results_alt.RDS")
 bart <- readRDS("results/flood_results_bart.RDS")
 nngp <- readRDS("results/flood_results_nngp.RDS")
 data_split <- readRDS("results/data_split.RDS")
 indexTest <- data_split[[2]]
+test_subjects <- 6:10
 nTest <- length(indexTest)
+nTestSubj <- length(test_subjects)
 load("data/flood_data.RData")
-test_subjects <- 1:2
 
+indexTest <- readRDS("results/test_points.RDS")
+nTest <- length(indexTest)
 
 # Parameter estimates
 sigma2 <- c(sketching$means['sigma2'], 
@@ -21,30 +24,35 @@ beta <- c(sketching$means['beta7'],
 sketchParams <- data.frame(sigma2, tau2, beta)
 rownames(sketchParams) <- c("mean", "lower", "upper")
 
-means <- apply(sapply(test_subjects, function(i) apply(nngp$obj[[i]]$p.theta.samples, 2, mean)), 1, mean)
-lowers <- apply(sapply(test_subjects, function(i) apply(nngp$obj[[i]]$p.theta.samples, 2, quantile, .025)), 1, mean)
-uppers <- apply(sapply(test_subjects, function(i) apply(nngp$obj[[i]]$p.theta.samples, 2, quantile, .975)), 1, mean)
-betas <- sapply(test_subjects, function(i) mean(nngp$obj[[i]]$p.beta.samples[ ,2]))
+means <- apply(sapply(1:nTestSubj, function(i) apply(nngp[[i]]$p.theta.samples, 2, mean)), 1, mean)
+lowers <- apply(sapply(1:nTestSubj, function(i) apply(nngp[[i]]$p.theta.samples, 2, quantile, .025)), 1, mean)
+uppers <- apply(sapply(1:nTestSubj, function(i) apply(nngp[[i]]$p.theta.samples, 2, quantile, .975)), 1, mean)
+betas <- sapply(1:nTestSubj, function(i) mean(nngp[[i]]$p.beta.samples[ ,2]))
 nngpParams <- as.data.frame(rbind(means, lowers, uppers))
 nngpParams <- data.frame(nngpParams, beta = c(mean(betas), quantile(betas, c(.025, .975))))
 rownames(nngpParams) <- c("mean", "lower", "upper")
 
+# Aggregate NNGP predictions
+nngpPreds <- apply(sapply(1:nTestSubj, \(i) nngp[[i]]$y.hat.quant[indexTest, 1]), 1, mean)
+nngpLower <- apply(sapply(1:nTestSubj, \(i) nngp[[i]]$y.hat.quant[indexTest, 2]), 1, mean)
+nngpUpper <- apply(sapply(1:nTestSubj, \(i) nngp[[i]]$y.hat.quant[indexTest, 3]), 1, mean)
 
+# Calculate all predictive diagnostics
 length <- cvg <- score <- mspe <- pct <- matrix(0, nrow = length(test_subjects), ncol = 3)
-for (i in test_subjects) {
+for (i in 1:nTestSubj) {
   # True values
-  trueTest <- out[i, indexTest]
+  trueTest <- out[test_subjects[i], indexTest]
   
   # BART predictions
-  bartPreds <- bart[[i]]$yhat.test.mean
+  bartPreds <- bart[[i]]$yhat.test.mean[indexTest]
   bartCI <- apply(bart[[i]]$yhat.test, 2, quantile, c(0.025, 0.975))
-  bartLower <- bartCI[1, ]
-  bartUpper <- bartCI[2, ]
+  bartLower <- bartCI[1, indexTest]
+  bartUpper <- bartCI[2, indexTest]
 
   # NNGP predictions
-  nngpPreds <- apply(nngp$preds[[i]]$p.y.0, 1, mean)
-  nngpLower <- apply(nngp$preds[[i]]$p.y.0, 1, quantile, .025)
-  nngpUpper <- apply(nngp$preds[[i]]$p.y.0, 1, quantile, .975)
+  #nngpPreds <- apply(nngp[[i]]$y.hat.samples, 1, mean)[indexTest]
+  #nngpLower <- apply(nngp[[i]]$y.hat.samples, 1, quantile, .025)[indexTest]
+  #nngpUpper <- apply(nngp[[i]]$y.hat.samples, 1, quantile, .975)[indexTest]
 
   # Sketching predictions
   sketchPreds <- sketching$predictions[[i]][2, ]

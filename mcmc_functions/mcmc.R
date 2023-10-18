@@ -13,6 +13,7 @@ mcmc <- function(X, Y, D, S,
   theta <<- theta
   nSubj <- ifelse(class(X) == "list", length(X), 1)
   subjs <<- 1:nSubj
+  nTestSubj <- length(test_subjects)
   
   # Dimensions
   n <- nrow(X[[1]])
@@ -66,7 +67,7 @@ mcmc <- function(X, Y, D, S,
   BTest <<- exp(-theta * DTest)
   SigmaTest <<- exp(trSigma2[1]) * BTest + exp(trTau2[1]) * diag(nTest)
   YPreds <- lapply(test_subjects, matrix, data = NA, nrow = nTest, ncol = nIter)
-  for (j in test_subjects) {
+  for (j in 1:nTestSubj) {
     YPreds[[j]][ , 1] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , 1]), sigma = SigmaTest))
   }
   
@@ -137,7 +138,7 @@ mcmc <- function(X, Y, D, S,
     
     ### Posterior predictive sampling for test subjects ###
     SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
-    for (j in test_subjects) {
+    for (j in 1:nTestSubj) {
       YPreds[[j]][ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , i]), sigma = SigmaTest))
     }
   }
@@ -152,7 +153,7 @@ mcmc <- function(X, Y, D, S,
   trTau2 <- trTau2[index]
   #trTheta <- trTheta[index]
   beta <- beta[ , index]
-  YPreds <- lapply(test_subjects, \(j) YPreds[[j]][ , index])
+  YPreds <- lapply(1:nTestSubj, \(j) YPreds[[j]][ , index])
   nSamples <- length(index)
   
   # Back-transform
@@ -192,7 +193,7 @@ mcmc <- function(X, Y, D, S,
                     beta = apply(beta, 1, quantile, 0.975))
   
   # Posterior predictive results for test data
-  preds <- lapply(test_subjects, function(j) {
+  preds <- lapply(1:nTestSubj, function(j) {
     apply(YPreds[[j]], 1, quantile, c(0.025, 0.5, 0.975))
   })
   

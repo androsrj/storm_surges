@@ -17,14 +17,15 @@ mySeed <- 123
 
 # Read in indices for train and test data
 n <- nrow(coords)
-indices <- readRDS("results/data_split.RDS")
-indexTrain <- indices[[1]]
-indexTest <- indices[[2]]
-nTrain <- length(indexTrain)
+#indices <- readRDS("results/data_split.RDS")
+#indexTrain <- indices[[1]]
+indexTest <- readRDS("results/test_points.RDS")
+#nTrain <- length(indexTrain)
 nTest <- length(indexTest)
-
 storms <- 1:5
 stormsTest <- 6:10
+nTestSubj <- length(stormsTest)
+
 Y <- lapply(storms, \(i) out[i, ])
 X <- lapply(storms, \(i) {
   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
@@ -35,15 +36,15 @@ X <- lapply(storms, \(i) {
 })
 S <- coords[ , 1:2]
 
-YTest <- lapply(stormsTest, \(i) out[i, ])
+YTest <- lapply(stormsTest, \(i) out[i, indexTest])
 XTest <- lapply(stormsTest, \(i) {
   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
-  Xelev <- coords$elev_meters #[indexTest]
+  Xelev <- coords$elev_meters[indexTest]
   X <- cbind(Xstorm, Xelev)
   colnames(X) <- c(colnames(inputs), "elev")
   return(X)
 })
-#STest <- coords[indexTest, 1:2]
+STest <- coords[indexTest, 1:2]
 
 ## BART
 cl <- makeCluster(nCores)
@@ -81,9 +82,11 @@ nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[
                                                                      priors=priors, cov.model=cov.model,
                                                                      n.samples=nIter, n.omp.threads=1, fit.rep=TRUE)
 gc()
+
 #nngp_preds <- foreach(i = stormsTest, .packages="spNNGP") %dopar% predict(nngp_obj[[i - 5]], 
 #                                                                      matrix(c(rep(1, n), XTest[[i - 5]]), ncol = 2), 
 #                                                                      as.matrix(S))
+
 final.time <- Sys.time() - strt
 stopCluster(cl)
 if (file.exists(".RData")) {

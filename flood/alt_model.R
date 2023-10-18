@@ -32,7 +32,7 @@ test_subjects <- 6:10
 
 # Randomly sample indices for train and test data
 n <- nrow(coords)
-pctTest <- 0.01
+pctTest <- 0.02
 nTest <- floor(pctTest * n)
 set.seed(mySeed)
 indexTest <- sort(sample(1:n, nTest))
@@ -69,8 +69,9 @@ DTest <- rdist(STest)
 thetaVals <- seq(10^5, 10^6, length = totalCores)
 model <- "full_gp"
 mProp <- 0.01
-propSD <- c(0.01, 0.14)
+propSD <- c(0.03, 0.14)
 nSubj <- length(storms)
+nTestSubj <- length(test_subjects)
 
 cl <- makeCluster(nCores)
 registerDoParallel(cl)

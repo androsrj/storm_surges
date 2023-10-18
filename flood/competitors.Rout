@@ -17,13 +17,11 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger   (Mb)   max used   (Mb)
-Ncells 275608 14.8     506697   27.1     506697   27.1
-Vcells 462929  3.6 1056132336 8057.7 1200193280 9156.8
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 273690 14.7     660857 35.3   451905 24.2
+Vcells 459126  3.6    8388608 64.0  1800280 13.8
 > 
 > # Libraries
 > library(parallel) # For parallel computation
@@ -46,14 +44,15 @@ Loading required package: RANN
 > 
 > # Read in indices for train and test data
 > n <- nrow(coords)
-> indices <- readRDS("results/data_split.RDS")
-> indexTrain <- indices[[1]]
-> indexTest <- indices[[2]]
-> nTrain <- length(indexTrain)
+> #indices <- readRDS("results/data_split.RDS")
+> #indexTrain <- indices[[1]]
+> indexTest <- readRDS("results/test_points.RDS")
+> #nTrain <- length(indexTrain)
 > nTest <- length(indexTest)
-> 
 > storms <- 1:5
 > stormsTest <- 6:10
+> nTestSubj <- length(stormsTest)
+> 
 > Y <- lapply(storms, \(i) out[i, ])
 > X <- lapply(storms, \(i) {
 +   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
@@ -64,15 +63,26 @@ Loading required package: RANN
 + })
 > S <- coords[ , 1:2]
 > 
-> YTest <- lapply(stormsTest, \(i) out[i, ])
+> YTest <- lapply(stormsTest, \(i) out[i, indexTest])
 > XTest <- lapply(stormsTest, \(i) {
 +   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
-+   Xelev <- coords$elev_meters #[indexTest]
++   Xelev <- coords$elev_meters[indexTest]
 +   X <- cbind(Xstorm, Xelev)
 +   colnames(X) <- c(colnames(inputs), "elev")
 +   return(X)
 + })
-> #STest <- coords[indexTest, 1:2]
+Warning messages:
+1: In cbind(Xstorm, Xelev) :
+  number of rows of result is not a multiple of vector length (arg 2)
+2: In cbind(Xstorm, Xelev) :
+  number of rows of result is not a multiple of vector length (arg 2)
+3: In cbind(Xstorm, Xelev) :
+  number of rows of result is not a multiple of vector length (arg 2)
+4: In cbind(Xstorm, Xelev) :
+  number of rows of result is not a multiple of vector length (arg 2)
+5: In cbind(Xstorm, Xelev) :
+  number of rows of result is not a multiple of vector length (arg 2)
+> STest <- coords[indexTest, 1:2]
 > 
 > ## BART
 > cl <- makeCluster(nCores)
@@ -86,9 +96,9 @@ Loading required package: RANN
 +   file.remove(".RData")
 + }
 > gc()
-            used   (Mb) gc trigger   (Mb)   max used   (Mb)
-Ncells    399205   21.4     887237   47.4     506697   27.1
-Vcells 701216034 5349.9 1056132336 8057.7 1200193280 9156.8
+            used   (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells    399313   21.4     833028   44.5    657238   35.2
+Vcells 700950822 5347.9 1011802673 7719.5 700999850 5348.3
 > 
 > saveRDS(results, "results/flood_results_bart.RDS")
 > 
@@ -114,11 +124,13 @@ Vcells 701216034 5349.9 1056132336 8057.7 1200193280 9156.8
 +                                                                      n.samples=nIter, n.omp.threads=1, fit.rep=TRUE)
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells     454411    24.3     887237    47.4     508185    27.2
-Vcells 1696952905 12946.8 2445917896 18660.9 1696957022 12946.8
+Ncells     454550    24.3     833028    44.5     657238    35.2
+Vcells 1696687709 12944.7 2301414406 17558.4 1696691769 12944.8
+> 
 > #nngp_preds <- foreach(i = stormsTest, .packages="spNNGP") %dopar% predict(nngp_obj[[i - 5]], 
 > #                                                                      matrix(c(rep(1, n), XTest[[i - 5]]), ncol = 2), 
 > #                                                                      as.matrix(S))
+> 
 > final.time <- Sys.time() - strt
 > stopCluster(cl)
 > if (file.exists(".RData")) {
@@ -126,12 +138,12 @@ Vcells 1696952905 12946.8 2445917896 18660.9 1696957022 12946.8
 + }
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells     454411    24.3     887237    47.4     508185    27.2
-Vcells 1696952905 12946.8 2445917896 18660.9 1696964547 12946.9
+Ncells     454550    24.3     833028    44.5     657238    35.2
+Vcells 1696687709 12944.7 2761777287 21070.7 1696699351 12944.8
 > 
 > #saveRDS(list(obj = nngp_obj, preds = nngp_preds), "results/flood_results_nngp.RDS")
 > saveRDS(nngp_obj, "results/flood_results_nngp.RDS")
 > 
 > proc.time()
     user   system  elapsed 
- 562.220   27.751 4605.130 
+ 521.247   22.394 4517.281 

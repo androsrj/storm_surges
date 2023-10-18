@@ -6,8 +6,8 @@ wasserstein <- function(results, time) {
   wassersteinLower <- rowMeans(sapply(results, \(x) unlist(x$credLower)))
   wassersteinUpper <- rowMeans(sapply(results, \(x) unlist(x$credUpper)))
   
-  predictions <- vector("list", length(test_subjects))
-  for (i in test_subjects) {
+  predictions <- vector("list", nTestSubj)
+  for (i in 1:nTestSubj) {
     predsList <- lapply(results, \(x) x$preds[[i]])
     predictions[[i]] <- Reduce("+", predsList) / length(predsList)
   }
