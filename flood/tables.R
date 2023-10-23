@@ -1,15 +1,12 @@
-sketching <- readRDS("results/flood_results_alt.RDS")
+sketching <- readRDS("results/flood_results_sketching.RDS")
 bart <- readRDS("results/flood_results_bart.RDS")
 nngp <- readRDS("results/flood_results_nngp.RDS")
-data_split <- readRDS("results/data_split.RDS")
-indexTest <- data_split[[2]]
-test_subjects <- 6:10
-nTest <- length(indexTest)
-nTestSubj <- length(test_subjects)
-load("data/flood_data.RData")
-
 indexTest <- readRDS("results/test_points.RDS")
 nTest <- length(indexTest)
+test_subjects <- 6:10
+nTestSubj <- length(test_subjects)
+load("data/flood_data.RData")
+n <- nrow(coords)
 
 # Parameter estimates
 sigma2 <- c(sketching$means['sigma2'], 
@@ -44,15 +41,9 @@ for (i in 1:nTestSubj) {
   trueTest <- out[test_subjects[i], indexTest]
   
   # BART predictions
-  bartPreds <- bart[[i]]$yhat.test.mean[indexTest]
-  bartCI <- apply(bart[[i]]$yhat.test, 2, quantile, c(0.025, 0.975))
-  bartLower <- bartCI[1, indexTest]
-  bartUpper <- bartCI[2, indexTest]
-
-  # NNGP predictions
-  #nngpPreds <- apply(nngp[[i]]$y.hat.samples, 1, mean)[indexTest]
-  #nngpLower <- apply(nngp[[i]]$y.hat.samples, 1, quantile, .025)[indexTest]
-  #nngpUpper <- apply(nngp[[i]]$y.hat.samples, 1, quantile, .975)[indexTest]
+  bartPreds <- bart$preds[((i - 1) * n + 1):(i * n)]
+  bartLower <- bart$lower[((i - 1) * n + 1):(i * n)]
+  bartUpper <- bart$upper[((i - 1) * n + 1):(i * n)]
 
   # Sketching predictions
   sketchPreds <- sketching$predictions[[i]][2, ]

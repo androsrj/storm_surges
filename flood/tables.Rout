@@ -17,18 +17,15 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> sketching <- readRDS("results/flood_results_alt.RDS")
+> sketching <- readRDS("results/flood_results_sketching.RDS")
 > bart <- readRDS("results/flood_results_bart.RDS")
 > nngp <- readRDS("results/flood_results_nngp.RDS")
-> data_split <- readRDS("results/data_split.RDS")
-> indexTest <- data_split[[2]]
-> test_subjects <- 6:10
-> nTest <- length(indexTest)
-> nTestSubj <- length(test_subjects)
-> load("data/flood_data.RData")
-> 
 > indexTest <- readRDS("results/test_points.RDS")
 > nTest <- length(indexTest)
+> test_subjects <- 6:10
+> nTestSubj <- length(test_subjects)
+> load("data/flood_data.RData")
+> n <- nrow(coords)
 > 
 > # Parameter estimates
 > sigma2 <- c(sketching$means['sigma2'], 
@@ -44,133 +41,7 @@ Type 'q()' to quit R.
 > rownames(sketchParams) <- c("mean", "lower", "upper")
 > 
 > means <- apply(sapply(1:nTestSubj, function(i) apply(nngp[[i]]$p.theta.samples, 2, mean)), 1, mean)
-> lowers <- apply(sapply(1:nTestSubj, function(i) apply(nngp[[i]]$p.theta.samples, 2, quantile, .025)), 1, mean)
-> uppers <- apply(sapply(1:nTestSubj, function(i) apply(nngp[[i]]$p.theta.samples, 2, quantile, .975)), 1, mean)
-> betas <- sapply(1:nTestSubj, function(i) mean(nngp[[i]]$p.beta.samples[ ,2]))
-> nngpParams <- as.data.frame(rbind(means, lowers, uppers))
-> nngpParams <- data.frame(nngpParams, beta = c(mean(betas), quantile(betas, c(.025, .975))))
-> rownames(nngpParams) <- c("mean", "lower", "upper")
-> 
-> # Aggregate NNGP predictions
-> nngpPreds <- apply(sapply(1:nTestSubj, \(i) nngp[[i]]$y.hat.quant[indexTest, 1]), 1, mean)
-> nngpLower <- apply(sapply(1:nTestSubj, \(i) nngp[[i]]$y.hat.quant[indexTest, 2]), 1, mean)
-> nngpUpper <- apply(sapply(1:nTestSubj, \(i) nngp[[i]]$y.hat.quant[indexTest, 3]), 1, mean)
-> 
-> # Calculate all predictive diagnostics
-> length <- cvg <- score <- mspe <- pct <- matrix(0, nrow = length(test_subjects), ncol = 3)
-> for (i in 1:nTestSubj) {
-+   # True values
-+   trueTest <- out[test_subjects[i], indexTest]
-+   
-+   # BART predictions
-+   bartPreds <- bart[[i]]$yhat.test.mean[indexTest]
-+   bartCI <- apply(bart[[i]]$yhat.test, 2, quantile, c(0.025, 0.975))
-+   bartLower <- bartCI[1, indexTest]
-+   bartUpper <- bartCI[2, indexTest]
-+ 
-+   # NNGP predictions
-+   #nngpPreds <- apply(nngp[[i]]$y.hat.samples, 1, mean)[indexTest]
-+   #nngpLower <- apply(nngp[[i]]$y.hat.samples, 1, quantile, .025)[indexTest]
-+   #nngpUpper <- apply(nngp[[i]]$y.hat.samples, 1, quantile, .975)[indexTest]
-+ 
-+   # Sketching predictions
-+   sketchPreds <- sketching$predictions[[i]][2, ]
-+   sketchLower <- sketching$predictions[[i]][1, ]
-+   sketchUpper <- sketching$predictions[[i]][3, ]
-+   
-+   # Length
-+   lengthSketch <- mean(sketchUpper - sketchLower)
-+   lengthBart <- mean(bartUpper - bartLower)
-+   lengthNNGP <- mean(nngpUpper - nngpLower)
-+   length[i, ] <- c(lengthSketch, lengthBart, lengthNNGP)
-+ 
-+   # Coverage
-+   cvgSketch <- mean(sketchUpper > trueTest & sketchLower < trueTest)
-+   cvgBart <- mean(bartUpper > trueTest & bartLower < trueTest)
-+   cvgNNGP <- mean(nngpUpper > trueTest & nngpLower < trueTest)
-+   cvg[i, ] <- c(cvgSketch, cvgBart, cvgNNGP)
-+ 
-+   # MSPE
-+   mspeSketch <- mean((sketchPreds - trueTest)^2)
-+   mspeBart <- mean((bartPreds - trueTest)^2)
-+   mspeNNGP <- mean((nngpPreds - trueTest)^2)
-+   mspe[i, ] <- c(mspeSketch, mspeBart, mspeNNGP)
-+ 
-+   # Interval score
-+   a <- 0.05
-+   scoreSketch <- mean( (sketchUpper - sketchLower) + 
-+                  2/a * (sketchLower - trueTest) * 
-+                  (trueTest < sketchLower) + 
-+                  2/a * (trueTest - sketchUpper) * 
-+                  (trueTest > sketchUpper) ) 
-+   scoreBart <- mean( (bartUpper - bartLower) +
-+ 		   2/a * (bartLower - trueTest) *
-+ 		   (trueTest < bartLower) + 
-+ 		   2/a * (trueTest - bartUpper) * 
-+ 		   (trueTest > bartUpper) )
-+   scoreNNGP <- mean( (nngpUpper - nngpLower) +
-+ 		   2/a * (nngpLower - trueTest) *
-+ 		   (trueTest < nngpLower) + 
-+ 		   2/a * (trueTest - nngpUpper) * 
-+ 		   (trueTest > nngpUpper) )
-+   score[i, ] <- c(scoreSketch, scoreBart, scoreNNGP)
-+ 
-+   # Over/under 4 feet
-+   trueFeet <- trueTest * 3.28084
-+   trueOver <- trueFeet >= 4.0
-+ 
-+   sketchFeet <- sketchPreds * 3.28084
-+   sketchOver <- sketchFeet >= 4.0
-+   sketchPct <- mean(trueOver == sketchOver)
-+   
-+   bartFeet <- bartPreds * 3.28084
-+   bartOver <- bartFeet >= 4.0
-+   bartPct <- mean(trueOver == bartOver)
-+ 
-+   nngpFeet <- nngpPreds * 3.28084
-+   nngpOver <- nngpFeet >= 4.0
-+   nngpPct <- mean(trueOver == nngpOver)
-+   
-+   pct[i, ] <- c(sketchPct, bartPct, nngpPct)
-+ }
-> 
-> length <- apply(length, 2, mean)
-> cvg <- apply(cvg, 2, mean)
-> mspe <- apply(mspe, 2, mean)
-> score <- apply(score, 2, mean)
-> pct <- 1 - apply(pct, 2, mean)
-> 
-> # Parameter estimates
-> 
-> sketchParams
-         sigma2      tau2       beta
-mean  0.5470669 0.2049168 -0.7318186
-lower 0.5152866 0.1307576 -0.7332881
-upper 0.6221286 0.2370213 -0.7303449
-> nngpParams
-        sigma.sq     tau.sq      phi       beta
-mean  17.5371538 0.13637184 5.420917 -0.2186687
-lower  0.5624512 0.08434061 4.814983 -0.2743286
-upper 22.4856415 0.54291579 6.021905 -0.1268930
-> 
-> # Predictive diagnostics (our approach vs BART)
-> preds_df <- data.frame(cvg = cvg, 
-+ 		       length = length, 
-+ 		       mspe = mspe, 
-+ 		       score = score, 
-+ 		       pct = pct)
-> rownames(preds_df) <- c("Sketching", "BART", "NNGP")
-> preds_df
-                 cvg    length      mspe     score        pct
-Sketching 0.87746479 3.3833204 1.2068229  5.714663 0.07867203
-BART      0.01690141 0.0766021 8.3048052 92.092775 0.34305835
-NNGP      0.25352113 0.7793301 0.8598473 18.045809 0.08812877
-> 
-> # Also make sure that acceptance rates are satisfactory
-> sketching$acc
- sigma2    tau2 
-0.17328 0.21016 
-> 
-> proc.time()
-   user  system elapsed 
-131.845   5.806 137.731 
+Error in apply(nngp[[i]]$p.theta.samples, 2, mean) : 
+  dim(X) must have a positive length
+Calls: apply -> sapply -> lapply -> FUN -> apply
+Execution halted

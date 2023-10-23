@@ -17,8 +17,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > source("../other_functions/spatial_data.R")
 Loading required package: spam
 Spam version 2.9-1 (2022-08-07) is loaded.
@@ -43,6 +41,7 @@ Try help(fields) to get started.
 > n <- 10000
 > nTest <- 1000
 > nSubj <- 10
+> nTestSubj <- 5
 > 
 > # True parameter values
 > trueSigma2 <- 2
@@ -71,7 +70,8 @@ Try help(fields) to get started.
 > set.seed(mySeed)
 > X <- matrix(rnorm(nTest * length(trueBeta)), nrow = nTest, ncol = length(trueBeta))
 > X <- X[order(X[ , 1]), ]
-> Z <- seq(5, 50, length = nSubj)
+> #Z <- seq(5, 50, length = nSubj)
+> Z <- runif(nTestSubj, 5, 50)
 > test <- spatialData(n = nTest, 
 +                     X = X, 
 +                     Z = Z,
@@ -84,4 +84,4 @@ Try help(fields) to get started.
 > 
 > proc.time()
    user  system elapsed 
- 80.174   3.756  89.021 
+ 52.652   1.338  55.200 

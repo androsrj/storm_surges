@@ -32,6 +32,7 @@ load("data/test.RData")
 nSubj <- length(train$X)
 n <- nrow(train$X[[1]])
 nTest <- nrow(test$X[[1]])
+nTestSubj <- length(test$X)
 X <- train$X
 Y <- train$Y
 S <- train$S

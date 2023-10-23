@@ -5,6 +5,7 @@ mySeed <- 123
 n <- 10000
 nTest <- 1000
 nSubj <- 10
+nTestSubj <- 5
 
 # True parameter values
 trueSigma2 <- 2
@@ -33,7 +34,8 @@ save(train, file = "data/train.RData")
 set.seed(mySeed)
 X <- matrix(rnorm(nTest * length(trueBeta)), nrow = nTest, ncol = length(trueBeta))
 X <- X[order(X[ , 1]), ]
-Z <- seq(5, 50, length = nSubj)
+#Z <- seq(5, 50, length = nSubj)
+Z <- runif(nTestSubj, 5, 50)
 test <- spatialData(n = nTest, 
                     X = X, 
                     Z = Z,

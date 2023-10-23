@@ -15,7 +15,8 @@ sketch_full_gp$acc
 sketch_mpp$acc
 sketch_sparse_gp$acc
 
-test_subjects <- 1:3
+test_subjects <- 6:10
+nTestSubj <- length(test_subjects)
 model <- rep(c("Full_GP", "MPP", "Sparse_GP"), each = 5)
 splitType <- rep(c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"), 3)
 
@@ -138,7 +139,7 @@ beta2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[5]),
 
 MSPE <- cvg_ind <- score <- numeric(15)
 
-for (i in test_subjects) {
+for (i in 1:nTestSubj) {
   lowerPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[i]][1, ])),
 		      sketch_full_gp$predictions[[i]][1, ],
 		      t(sapply(DC_mpp, \(x) x$predictions[[i]][1, ])),

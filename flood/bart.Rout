@@ -1,0 +1,154 @@
+
+R version 4.2.0 (2022-04-22) -- "Vigorous Calisthenics"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list = ls())
+> gc()
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 273690 14.7     660857 35.3   451905 24.2
+Vcells 459126  3.6    8388608 64.0  1800280 13.8
+> 
+> # Libraries
+> library(BayesTree) # For BART
+> 
+> # Read in
+> load("data/flood_data.RData")
+> 
+> # Clusters and seed
+> nCores <- 5
+> mySeed <- 123
+> 
+> # Read in indices for test data
+> n <- nrow(coords)
+> indexTest <- readRDS("results/test_points.RDS")
+> nTest <- length(indexTest)
+> storms <- 1:5
+> nSubj <- length(storms)
+> stormsTest <- 6:10
+> nTestSubj <- length(stormsTest)
+> 
+> Y <- lapply(storms, \(i) out[i, ])
+> X <- lapply(storms, \(i) {
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
++   Xelev <- coords$elev_meters #[indexTrain]
++   X <- cbind(Xstorm, Xelev)
++   colnames(X) <- c(colnames(inputs), "elev")
++   return(X)
++ })
+> S <- coords[ , 1:2]
+> 
+> YTest <- lapply(stormsTest, \(i) out[i, indexTest])
+> XTest <- lapply(stormsTest, \(i) {
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
++   Xelev <- coords$elev_meters[indexTest]
++   X <- cbind(Xstorm, Xelev)
++   colnames(X) <- c(colnames(inputs), "elev")
++   return(X)
++ })
+> STest <- coords[indexTest, 1:2]
+> 
+> X <- do.call('rbind', X)
+> XTest <- do.call('rbind', XTest)
+> Y <- do.call('c', Y)
+> YTest <- do.call('c', YTest)
+> 
+> dim(X)
+[1] 248595      6
+> dim(XTest)
+[1] 4970    6
+> dim(Y)
+NULL
+> dim(YTest)
+NULL
+> 
+> ##############
+> #### BART ####
+> ##############
+> 
+> bart_obj <- bart(X, Y, XTest)
+
+
+Running BART with numeric y
+
+number of trees: 200
+Prior:
+	k: 2.000000
+	degrees of freedom in sigma prior: 3
+	quantile in sigma prior: 0.900000
+	power and base for tree prior: 2.000000 0.950000
+	use quantiles for rule cut points: 0
+data:
+	number of training observations: 248595
+	number of test observations: 4970
+	number of explanatory variables: 6
+
+
+Cutoff rules c in x<=c vs x>c
+Number of cutoffs: (var: number of possible c):
+(1: 100) (2: 100) (3: 100) (4: 100) (5: 100) 
+(6: 100) 
+
+
+Running mcmc loop:
+iteration: 100 (of 1100)
+iteration: 200 (of 1100)
+iteration: 300 (of 1100)
+iteration: 400 (of 1100)
+iteration: 500 (of 1100)
+iteration: 600 (of 1100)
+iteration: 700 (of 1100)
+iteration: 800 (of 1100)
+iteration: 900 (of 1100)
+iteration: 1000 (of 1100)
+iteration: 1100 (of 1100)
+time for loop: 18947
+
+Tree sizes, last iteration:
+2 4 1 4 3 3 2 2 5 2 2 3 4 6 3 2 3 2 2 4 
+4 2 3 3 2 2 1 1 2 2 4 2 2 4 3 2 4 3 2 2 
+1 4 3 2 2 1 1 2 2 2 2 2 4 2 4 3 2 1 6 3 
+2 4 5 2 4 4 3 2 2 3 3 2 4 4 2 2 3 2 2 3 
+3 2 3 3 2 2 2 1 3 2 2 2 2 2 2 3 2 2 2 3 
+3 3 1 2 2 2 2 2 3 2 3 3 2 2 3 4 2 2 2 2 
+3 3 4 2 2 2 2 2 3 3 2 2 2 2 2 2 2 2 2 3 
+2 2 3 3 1 3 2 4 2 3 5 2 3 3 3 3 3 2 4 2 
+2 3 4 2 2 2 2 2 4 1 3 2 2 2 2 2 3 4 2 3 
+2 2 3 3 3 3 2 2 1 4 2 3 3 2 2 1 2 3 2 3 
+Variable Usage, last iteration (var:count):
+(1: 35) (2: 45) (3: 37) (4: 30) (5: 40) 
+(6: 120) 
+DONE BART 11-2-2014
+
+> preds <- bart_obj$yhat.test.mean
+> mean((YTest - preds)^2)
+[1] 0.7952597
+> 
+> length(YTest)
+[1] 4970
+> length(preds)
+[1] 4970
+> 
+> rm(list=ls())
+> gc()
+         used (Mb) gc trigger   (Mb)   max used   (Mb)
+Ncells 350590 18.8    1379408   73.7    1379408   73.7
+Vcells 698026  5.4 1056513336 8060.6 1014324494 7738.7
+> 
+> proc.time()
+     user    system   elapsed 
+18916.859    69.639 18988.470 

@@ -17,8 +17,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
 > source("../mcmc_functions/priors.R")
@@ -76,6 +74,7 @@ Try help(fields) to get started.
 > nSubj <- length(train$X)
 > n <- nrow(train$X[[1]])
 > nTest <- nrow(test$X[[1]])
+> nTestSubj <- length(test$X)
 > X <- train$X
 > Y <- train$Y
 > S <- train$S
@@ -250,4 +249,4 @@ Try help(fields) to get started.
 > 
 > proc.time()
       user     system    elapsed 
-    66.998     18.673 101765.187 
+    63.620     19.425 162863.152 
