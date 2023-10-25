@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
 > source("../mcmc_functions/priors.R")
@@ -64,7 +66,7 @@ Try help(fields) to get started.
 > # Number of clusters for parallel implementation
 > #nCores <- detectCores() / 2
 > nCores <- 10
-> mySeed <- 1234
+> mySeed <- 1997
 > nKnots <- 500
 > test_subjects <- 1:5
 > 
@@ -249,4 +251,4 @@ Try help(fields) to get started.
 > 
 > proc.time()
       user     system    elapsed 
-    63.620     19.425 162863.152 
+    71.023     23.106 165813.690 

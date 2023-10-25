@@ -22,7 +22,7 @@ library(pracma) # For sparse matrix calculation
 # Number of clusters for parallel implementation
 #nCores <- detectCores() / 2
 nCores <- 10
-mySeed <- 1234
+mySeed <- 1997
 nKnots <- 500
 test_subjects <- 1:5
 

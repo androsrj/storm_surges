@@ -17,13 +17,11 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > rm(list = ls())
 > gc()
          used (Mb) gc trigger (Mb) max used (Mb)
-Ncells 275579 14.8     666002 35.6   456470 24.4
-Vcells 462977  3.6    8388608 64.0  1820341 13.9
+Ncells 273690 14.7     660857 35.3   451905 24.2
+Vcells 459126  3.6    8388608 64.0  1800280 13.8
 > 
 > # Libraries
 > library(parallel) # For parallel computation
@@ -66,29 +64,19 @@ Loading required package: RANN
 > 
 > YTest <- lapply(stormsTest, \(i) out[i, indexTest])
 > XTest <- lapply(stormsTest, \(i) {
-+   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
++   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
 +   Xelev <- coords$elev_meters[indexTest]
 +   X <- cbind(Xstorm, Xelev)
 +   colnames(X) <- c(colnames(inputs), "elev")
 +   return(X)
 + })
-Warning messages:
-1: In cbind(Xstorm, Xelev) :
-  number of rows of result is not a multiple of vector length (arg 2)
-2: In cbind(Xstorm, Xelev) :
-  number of rows of result is not a multiple of vector length (arg 2)
-3: In cbind(Xstorm, Xelev) :
-  number of rows of result is not a multiple of vector length (arg 2)
-4: In cbind(Xstorm, Xelev) :
-  number of rows of result is not a multiple of vector length (arg 2)
-5: In cbind(Xstorm, Xelev) :
-  number of rows of result is not a multiple of vector length (arg 2)
 > STest <- coords[indexTest, 1:2]
 > 
 > ##############
 > #### BART ####
 > ##############
 > 
+> strt <- Sys.time()
 > bart_obj <- bart(do.call('rbind', X), do.call('c', Y), do.call('rbind', XTest))
 
 
@@ -103,7 +91,7 @@ Prior:
 	use quantiles for rule cut points: 0
 data:
 	number of training observations: 248595
-	number of test observations: 248595
+	number of test observations: 4970
 	number of explanatory variables: 6
 
 
@@ -125,38 +113,41 @@ iteration: 800 (of 1100)
 iteration: 900 (of 1100)
 iteration: 1000 (of 1100)
 iteration: 1100 (of 1100)
-time for loop: 20946
+time for loop: 19966
 
 Tree sizes, last iteration:
-3 2 3 3 3 4 3 3 2 4 3 2 2 2 2 3 6 2 2 2 
-3 4 7 2 2 3 2 2 3 2 3 1 3 3 2 2 2 2 3 2 
-2 2 2 3 2 2 5 3 1 4 2 2 2 4 2 2 3 2 4 2 
-3 2 3 3 2 2 2 2 4 2 1 2 2 2 2 2 2 2 1 3 
-2 2 4 3 2 2 2 2 5 2 2 2 3 2 2 4 2 2 3 3 
-2 2 2 3 3 2 2 2 2 2 2 3 2 2 3 2 2 2 1 2 
-2 4 2 2 2 2 2 1 2 2 2 2 2 2 2 3 2 2 2 2 
-3 2 2 2 2 4 2 1 5 2 2 3 3 3 2 2 2 2 2 2 
-2 2 3 2 3 3 2 2 2 3 2 2 2 2 3 2 2 2 2 2 
-2 3 2 2 2 2 2 5 2 3 5 5 2 2 2 3 2 1 3 2 
+2 2 3 3 3 1 2 2 2 2 1 2 2 3 2 1 3 3 2 2 
+2 2 4 2 2 2 3 2 2 3 3 2 3 3 1 3 3 3 2 2 
+3 5 2 3 2 3 3 3 2 1 2 2 2 3 2 2 4 3 2 1 
+2 3 3 2 3 2 3 4 2 4 3 2 4 3 4 2 3 2 2 4 
+2 2 2 4 2 3 2 1 2 2 2 2 3 3 2 4 4 2 2 3 
+4 4 2 4 3 1 3 2 2 3 2 2 2 2 2 5 2 2 3 2 
+2 2 2 2 2 4 3 2 2 2 4 1 2 4 3 2 2 3 2 2 
+3 2 2 3 4 3 3 2 2 2 2 1 2 2 2 3 3 2 2 5 
+2 4 2 3 2 3 3 1 2 3 1 2 2 2 2 5 2 3 3 2 
+2 2 2 4 2 2 2 2 3 1 2 2 2 2 2 4 5 2 2 2 
 Variable Usage, last iteration (var:count):
-(1: 32) (2: 38) (3: 31) (4: 42) (5: 32) 
-(6: 110) 
+(1: 35) (2: 33) (3: 34) (4: 33) (5: 45) 
+(6: 114) 
 DONE BART 11-2-2014
 
 > bartPreds <- bart_obj$yhat.test.mean
-> bartLower <- apply(bart_obj$yhat.test, 1, quantile, 0.025)
-> bartUpper <- apply(bart_obj$yhat.test, 1, quantile, 0.975)
+> bartLower <- apply(bart_obj$yhat.test, 2, quantile, 0.025)
+> bartUpper <- apply(bart_obj$yhat.test, 2, quantile, 0.975)
 > 
+> bartTime <- Sys.time() - strt
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
-[1] TRUE
 > gc()
-            used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    426736   22.8    1582624    84.6    1582624    84.6
-Vcells 701040185 5348.6 2269599521 17315.7 2269506253 17315.0
+            used   (Mb) gc trigger    (Mb)   max used   (Mb)
+Ncells    427519   22.9    1584974    84.7    1584974   84.7
+Vcells 455719348 3476.9 1323883198 10100.5 1025544321 7824.3
 > 
-> bart <- list(preds = bartPreds, lower = bartLower, upper = bartUpper)
+> bart <- list(preds = bartPreds, 
++ 	     lower = bartLower, 
++ 	     upper = bartUpper,
++ 	     time = bartTime)
 > saveRDS(bart, "results/flood_results_bart.RDS")
 > 
 > ##############
@@ -177,20 +168,20 @@ Vcells 701040185 5348.6 2269599521 17315.7 2269506253 17315.0
 > registerDoParallel(cl)
 > strt <- Sys.time()
 > set.seed(mySeed)
-> nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
+> nngp_obj <- foreach(i = 1:nSubj, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
 +                                                                      starting=starting, method="latent", 
 +                                                                      n.neighbors=10, tuning=tuning, 
 +                                                                      priors=priors, cov.model=cov.model,
 +                                                                      n.samples=nIter, n.omp.threads=1, fit.rep=TRUE)
-> final.time <- Sys.time() - strt
+> nngpTime <- Sys.time() - strt
 > stopCluster(cl)
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells     496735    26.6    1582624    84.6    1582624    84.6
-Vcells 1945418573 14842.4 2723599425 20779.5 2269506253 17315.0
+Ncells     496639    26.6    1584974    84.7    1584974    84.7
+Vcells 1701557618 12981.9 2362685802 18025.9 1701596916 12982.2
 > 
 > # Extract parameter estimates and credible intervals
 > means <- apply(sapply(1:nSubj, function(i) apply(nngp_obj[[i]]$p.theta.samples, 2, mean)), 1, mean)
@@ -202,14 +193,15 @@ Vcells 1945418573 14842.4 2723599425 20779.5 2269506253 17315.0
 > rownames(nngpParams) <- c("mean", "lower", "upper")
 > 
 > # Aggregate predictions for test points
-> nngpPreds <- apply(sapply(1:nSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 1]), 1, mean)
-> nngpLower <- apply(sapply(1:nSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 2]), 1, mean)
-> nngpUpper <- apply(sapply(1:nSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 3]), 1, mean)
+> nngpPreds <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 1]), 1, mean)
+> nngpLower <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 2]), 1, mean)
+> nngpUpper <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 3]), 1, mean)
 > 
-> nngp <- list(nngpParams = nngpParams, 
-+ 	     nngpPreds = nngpPreds,
-+ 	     nngpLower = nngpLower,
-+ 	     nngpUpper = nngpUpper) 
+> nngp <- list(params = nngpParams, 
++ 	     preds = nngpPreds,
++ 	     lower = nngpLower,
++ 	     upper = nngpUpper,
++ 	     time = nngpTime) 
 > saveRDS(nngp, "results/flood_results_nngp.RDS")
 > 
 > 
@@ -224,41 +216,44 @@ Vcells 1945418573 14842.4 2723599425 20779.5 2269506253 17315.0
 > out <- out[1:nStorms, ]
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells     503070    26.9    1582624    84.6    1582624    84.6
-Vcells 1747039098 13328.9 2723599425 20779.5 2269506253 17315.0
+Ncells     502984    26.9    1584974    84.7    1584974    84.7
+Vcells 1503178162 11468.4 2362685802 18025.9 1702942296 12992.5
 > 
+> strt <- Sys.time()
 > set.seed(mySeed)
 > model <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc=2, n.cores=1)
-MCMC Start #-- Oct 22 10:29:54 PM --# nbasis: 0 
-MCMC iteration 1000 #-- Oct 22 10:29:55 PM --# nbasis: 1 
-MCMC iteration 2000 #-- Oct 22 10:29:55 PM --# nbasis: 1 
-MCMC iteration 3000 #-- Oct 22 10:29:56 PM --# nbasis: 2 
-MCMC iteration 4000 #-- Oct 22 10:29:56 PM --# nbasis: 2 
-MCMC iteration 5000 #-- Oct 22 10:29:57 PM --# nbasis: 1 
-MCMC iteration 6000 #-- Oct 22 10:29:57 PM --# nbasis: 2 
-MCMC iteration 7000 #-- Oct 22 10:29:58 PM --# nbasis: 2 
-MCMC iteration 8000 #-- Oct 22 10:29:58 PM --# nbasis: 2 
-MCMC iteration 9000 #-- Oct 22 10:29:59 PM --# nbasis: 1 
-MCMC iteration 10000 #-- Oct 22 10:29:59 PM --# nbasis: 1 
-MCMC Start #-- Oct 22 10:29:59 PM --# nbasis: 0 
-MCMC iteration 1000 #-- Oct 22 10:30:00 PM --# nbasis: 1 
-MCMC iteration 2000 #-- Oct 22 10:30:00 PM --# nbasis: 1 
-MCMC iteration 3000 #-- Oct 22 10:30:01 PM --# nbasis: 0 
-MCMC iteration 4000 #-- Oct 22 10:30:01 PM --# nbasis: 1 
-MCMC iteration 5000 #-- Oct 22 10:30:02 PM --# nbasis: 1 
-MCMC iteration 6000 #-- Oct 22 10:30:02 PM --# nbasis: 1 
-MCMC iteration 7000 #-- Oct 22 10:30:03 PM --# nbasis: 0 
-MCMC iteration 8000 #-- Oct 22 10:30:03 PM --# nbasis: 1 
-MCMC iteration 9000 #-- Oct 22 10:30:04 PM --# nbasis: 2 
-MCMC iteration 10000 #-- Oct 22 10:30:04 PM --# nbasis: 0 
+MCMC Start #-- Oct 24 02:41:44 AM --# nbasis: 0 
+MCMC iteration 1000 #-- Oct 24 02:41:44 AM --# nbasis: 1 
+MCMC iteration 2000 #-- Oct 24 02:41:45 AM --# nbasis: 1 
+MCMC iteration 3000 #-- Oct 24 02:41:45 AM --# nbasis: 2 
+MCMC iteration 4000 #-- Oct 24 02:41:46 AM --# nbasis: 2 
+MCMC iteration 5000 #-- Oct 24 02:41:46 AM --# nbasis: 1 
+MCMC iteration 6000 #-- Oct 24 02:41:47 AM --# nbasis: 2 
+MCMC iteration 7000 #-- Oct 24 02:41:47 AM --# nbasis: 2 
+MCMC iteration 8000 #-- Oct 24 02:41:48 AM --# nbasis: 2 
+MCMC iteration 9000 #-- Oct 24 02:41:48 AM --# nbasis: 1 
+MCMC iteration 10000 #-- Oct 24 02:41:49 AM --# nbasis: 1 
+MCMC Start #-- Oct 24 02:41:49 AM --# nbasis: 0 
+MCMC iteration 1000 #-- Oct 24 02:41:49 AM --# nbasis: 1 
+MCMC iteration 2000 #-- Oct 24 02:41:50 AM --# nbasis: 1 
+MCMC iteration 3000 #-- Oct 24 02:41:50 AM --# nbasis: 0 
+MCMC iteration 4000 #-- Oct 24 02:41:51 AM --# nbasis: 1 
+MCMC iteration 5000 #-- Oct 24 02:41:51 AM --# nbasis: 1 
+MCMC iteration 6000 #-- Oct 24 02:41:52 AM --# nbasis: 1 
+MCMC iteration 7000 #-- Oct 24 02:41:52 AM --# nbasis: 0 
+MCMC iteration 8000 #-- Oct 24 02:41:53 AM --# nbasis: 1 
+MCMC iteration 9000 #-- Oct 24 02:41:53 AM --# nbasis: 2 
+MCMC iteration 10000 #-- Oct 24 02:41:54 AM --# nbasis: 0 
 > predictions <- predict(model, inputs[stormsTest, ])
 > bassPreds <- apply(predictions, 2:3, mean)
 > bassLower <- apply(predictions, 2:3, quantile, 0.025)
 > bassUpper <- apply(predictions, 2:3, quantile, 0.975)
+> bassTime <- Sys.time() - strt
 > 
-> bass <- list(bassPreds = bassPreds,
-+ 	     bassLower = bassLower,
-+ 	     bassUpper = bassUpper)
+> bass <- list(preds = bassPreds,
++ 	     lower = bassLower,
++ 	     upper = bassUpper,
++ 	     time = bassTime)
 > saveRDS(bass, "results/flood_results_bass.RDS")
 > 
 > mspe <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, indexTest] - out[stormsTest[i], indexTest])^2) )
@@ -271,4 +266,4 @@ MCMC iteration 10000 #-- Oct 22 10:30:04 PM --# nbasis: 0
 > 
 > proc.time()
      user    system   elapsed 
-21080.431    89.327 22460.502 
+20083.511    74.248 21450.572 

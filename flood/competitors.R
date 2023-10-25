@@ -37,7 +37,7 @@ S <- coords[ , 1:2]
 
 YTest <- lapply(stormsTest, \(i) out[i, indexTest])
 XTest <- lapply(stormsTest, \(i) {
-  Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
+  Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
   Xelev <- coords$elev_meters[indexTest]
   X <- cbind(Xstorm, Xelev)
   colnames(X) <- c(colnames(inputs), "elev")
@@ -45,22 +45,6 @@ XTest <- lapply(stormsTest, \(i) {
 })
 STest <- coords[indexTest, 1:2]
 
-##############
-#### BART ####
-##############
-
-bart_obj <- bart(do.call('rbind', X), do.call('c', Y), do.call('rbind', XTest))
-bartPreds <- bart_obj$yhat.test.mean
-bartLower <- apply(bart_obj$yhat.test, 1, quantile, 0.025)
-bartUpper <- apply(bart_obj$yhat.test, 1, quantile, 0.975)
-
-if (file.exists(".RData")) {
-  file.remove(".RData")
-}
-gc()
-
-bart <- list(preds = bartPreds, lower = bartLower, upper = bartUpper)
-saveRDS(bart, "results/flood_results_bart.RDS")
 
 ##############
 #### NNGP ####
@@ -80,16 +64,13 @@ cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt <- Sys.time()
 set.seed(mySeed)
-nngp_obj <- foreach(i = storms, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
+nngp_obj <- foreach(i = 1:nSubj, .packages = "spNNGP") %dopar% spNNGP(Y[[i]] ~ X[[i]], coords=S, 
                                                                      starting=starting, method="latent", 
                                                                      n.neighbors=10, tuning=tuning, 
                                                                      priors=priors, cov.model=cov.model,
                                                                      n.samples=nIter, n.omp.threads=1, fit.rep=TRUE)
-final.time <- Sys.time() - strt
+nngpTime <- Sys.time() - strt
 stopCluster(cl)
-if (file.exists(".RData")) {
-  file.remove(".RData")
-}
 gc()
 
 # Extract parameter estimates and credible intervals
@@ -102,14 +83,15 @@ nngpParams <- data.frame(nngpParams, beta = c(mean(betas), quantile(betas, c(.02
 rownames(nngpParams) <- c("mean", "lower", "upper")
 
 # Aggregate predictions for test points
-nngpPreds <- apply(sapply(1:nSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 1]), 1, mean)
-nngpLower <- apply(sapply(1:nSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 2]), 1, mean)
-nngpUpper <- apply(sapply(1:nSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 3]), 1, mean)
+nngpPreds <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 1]), 1, mean)
+nngpLower <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 2]), 1, mean)
+nngpUpper <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 3]), 1, mean)
 
-nngp <- list(nngpParams = nngpParams, 
-	     nngpPreds = nngpPreds,
-	     nngpLower = nngpLower,
-	     nngpUpper = nngpUpper) 
+nngp <- list(params = nngpParams, 
+	     preds = nngpPreds,
+	     lower = nngpLower,
+	     upper = nngpUpper,
+	     time = nngpTime) 
 saveRDS(nngp, "results/flood_results_nngp.RDS")
 
 
@@ -124,20 +106,45 @@ inputs <- inputs[1:nStorms, ]
 out <- out[1:nStorms, ]
 gc()
 
+strt <- Sys.time()
 set.seed(mySeed)
 model <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc=2, n.cores=1)
 predictions <- predict(model, inputs[stormsTest, ])
 bassPreds <- apply(predictions, 2:3, mean)
 bassLower <- apply(predictions, 2:3, quantile, 0.025)
 bassUpper <- apply(predictions, 2:3, quantile, 0.975)
+bassTime <- Sys.time() - strt
 
-bass <- list(bassPreds = bassPreds,
-	     bassLower = bassLower,
-	     bassUpper = bassUpper)
+bass <- list(preds = bassPreds,
+	     lower = bassLower,
+	     upper = bassUpper,
+	     time = bassTime)
 saveRDS(bass, "results/flood_results_bass.RDS")
 
-mspe <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, indexTest] - out[stormsTest[i], indexTest])^2) )
-mean(mspe)
 
-pct <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, indexTest] > 4) == (out[stormsTest[i], indexTest] > 4)) )
-1-mean(pct)
+
+##############
+#### BART ####
+##############
+
+strt <- Sys.time()
+bart_obj <- bart(do.call('rbind', X), do.call('c', Y), do.call('rbind', XTest))
+bartPreds <- bart_obj$yhat.test.mean
+bartLower <- apply(bart_obj$yhat.test, 2, quantile, 0.025)
+bartUpper <- apply(bart_obj$yhat.test, 2, quantile, 0.975)
+
+bartTime <- Sys.time() - strt
+gc()
+
+bart <- list(preds = bartPreds, 
+	     lower = bartLower, 
+	     upper = bartUpper,
+	     time = bartTime)
+saveRDS(bart, "results/flood_results_bart.RDS")
+
+
+rm(list=ls())
+gc()
+if (file.exists(".RData")) {
+  remove(".RData")
+}

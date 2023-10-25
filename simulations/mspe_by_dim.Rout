@@ -17,8 +17,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
 > source("../mcmc_functions/priors.R")
@@ -66,6 +64,8 @@ Try help(fields) to get started.
 > load("data/train.RData")
 > load("data/test.RData")
 > nSubj <- length(train$X)
+> nTestSubj <- length(test$X)
+> test_subjects <- 1:nTestSubj
 > n <- nrow(train$X[[1]])
 > nTest <- nrow(test$X[[1]])
 > X <- train$X
@@ -77,12 +77,11 @@ Try help(fields) to get started.
 > STest <- test$S
 > DTest <- test$D
 >   
-> mVals <- c(1, 2, 5, 10, 25, 50, 100, 200, 300, 400, 500)
+> mVals <- c(1, 2, 5, 10, 25, 50, 100, 200)
 > mPropVals <- mVals / n
 > thetaVals <- seq(1, 5, length = nCores)
 > model <- "full_gp"
-> test_subjects <- 1:10
-> propSD <- c(0.05, 0.25)
+> propSD <- c(0.07, 0.23)
 > MSPE <- numeric(length(mVals))
 > acc <- matrix(0, nrow = length(mVals), ncol = 2)
 > 
@@ -100,34 +99,39 @@ Try help(fields) to get started.
 +   accVals <- lapply(obj, \(x) x$acceptance)
 +   acc[i, ] <- Reduce("+", accVals) / length(accVals)
 +   
-+   for (j in test_subjects) {
++   for (j in 1:nTestSubj) {
 +     predsList <- lapply(obj, \(x) x$preds[[j]])
 +     predictions <- Reduce("+", predsList) / length(predsList)
 +     MSPE[i] <- MSPE[i] + mean((predictions[2, ] - test$Y[[j]])^2)
 +   }
-+   MSPE[i] <- MSPE[i] / length(test_subjects)
++   MSPE[i] <- MSPE[i] / nTestSubj
 + }
 > 
 > saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
 > mVals
- [1]   1   2   5  10  25  50 100 200 300 400 500
+[1]   1   2   5  10  25  50 100 200
 > MSPE
- [1] 4.037968 3.566571 2.798922 2.381703 2.350746 2.350880 2.314845 2.306366
- [9] 2.286826 2.303746 2.295538
+[1] 5.393159 2.472360 2.768834 2.336610 2.323609 2.296040 2.290552 2.291457
 > acc
-         [,1]    [,2]
- [1,] 0.21056 0.06432
- [2,] 0.19972 0.10448
- [3,] 0.46500 0.14208
- [4,] 0.32316 0.32736
- [5,] 0.44000 0.21132
- [6,] 0.36372 0.19936
- [7,] 0.26092 0.19016
- [8,] 0.17668 0.19420
- [9,] 0.15048 0.24128
-[10,] 0.15708 0.17032
-[11,] 0.15036 0.20932
+        [,1]    [,2]
+[1,] 0.12992 0.11376
+[2,] 0.19172 0.16220
+[3,] 0.38676 0.17812
+[4,] 0.55596 0.12500
+[5,] 0.47820 0.12704
+[6,] 0.27144 0.20188
+[7,] 0.14680 0.19420
+[8,] 0.11684 0.24404
+> 
+> rm(list=ls())
+> gc()
+          used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells  849257 45.4    1353077   72.3   1353077   72.3
+Vcells 1427514 10.9  216508832 1651.9 270564647 2064.3
+> if (file.exists(".RData")) {
++   remove(".RData")
++ }
 > 
 > proc.time()
      user    system   elapsed 
-  119.170    32.044 19526.838 
+   91.363    23.996 55599.718 

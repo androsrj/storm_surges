@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > source("../other_functions/spatial_data.R")
 Loading required package: spam
 Spam version 2.9-1 (2022-08-07) is loaded.
@@ -35,7 +37,7 @@ Loading required package: viridis
 Loading required package: viridisLite
 
 Try help(fields) to get started.
-> mySeed <- 123
+> mySeed <- 1997
 > 
 > # Sample sizes
 > n <- 10000
@@ -84,4 +86,4 @@ Try help(fields) to get started.
 > 
 > proc.time()
    user  system elapsed 
- 52.652   1.338  55.200 
+ 56.073   1.676  60.834 

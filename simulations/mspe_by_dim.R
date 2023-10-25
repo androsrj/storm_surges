@@ -22,6 +22,8 @@ mySeed <- 9999
 load("data/train.RData")
 load("data/test.RData")
 nSubj <- length(train$X)
+nTestSubj <- length(test$X)
+test_subjects <- 1:nTestSubj
 n <- nrow(train$X[[1]])
 nTest <- nrow(test$X[[1]])
 X <- train$X
@@ -37,8 +39,7 @@ mVals <- c(1, 2, 5, 10, 25, 50, 100, 200, 300, 400, 500)
 mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"
-test_subjects <- 1:10
-propSD <- c(0.05, 0.25)
+propSD <- c(0.08, 0.23)
 MSPE <- numeric(length(mVals))
 acc <- matrix(0, nrow = length(mVals), ncol = 2)
 
@@ -56,15 +57,21 @@ for (i in 1:length(mVals)) {
   accVals <- lapply(obj, \(x) x$acceptance)
   acc[i, ] <- Reduce("+", accVals) / length(accVals)
   
-  for (j in test_subjects) {
+  for (j in 1:nTestSubj) {
     predsList <- lapply(obj, \(x) x$preds[[j]])
     predictions <- Reduce("+", predsList) / length(predsList)
     MSPE[i] <- MSPE[i] + mean((predictions[2, ] - test$Y[[j]])^2)
   }
-  MSPE[i] <- MSPE[i] / length(test_subjects)
+  MSPE[i] <- MSPE[i] / nTestSubj
 }
 
 saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
 mVals
 MSPE
 acc
+
+rm(list=ls())
+gc()
+if (file.exists(".RData")) {
+  remove(".RData")
+}

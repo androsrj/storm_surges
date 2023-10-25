@@ -1,5 +1,5 @@
 source("../other_functions/spatial_data.R")
-mySeed <- 123
+mySeed <- 1997
 
 # Sample sizes
 n <- 10000

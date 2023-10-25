@@ -1,0 +1,135 @@
+
+R version 4.2.0 (2022-04-22) -- "Vigorous Calisthenics"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> rm(list = ls())
+> gc()
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 275579 14.8     666002 35.6   456470 24.4
+Vcells 462977  3.6    8388608 64.0  1820341 13.9
+> 
+> # Libraries
+> library(parallel) # For parallel computation
+> library(doParallel) # For parallel computation
+Loading required package: foreach
+Loading required package: iterators
+> library(foreach) # For parallel computation
+> library(BayesTree) # For BART
+> library(spNNGP) # For NNGP
+Loading required package: coda
+Loading required package: Formula
+Loading required package: RANN
+> library(BASS) # For BASS
+> 
+> # Read in
+> load("data/flood_data.RData")
+> 
+> # Clusters and seed
+> nCores <- 20
+> mySeed <- 9999
+> 
+> # Read in indices for test data
+> n <- nrow(coords)
+> indexTest <- readRDS("results/test_points.RDS")
+> nTest <- length(indexTest)
+> storms <- 1:5
+> nSubj <- length(storms)
+> stormsTest <- 6:10
+> nTestSubj <- length(stormsTest)
+> 
+> 
+> ##############
+> #### BASS ####
+> ##############
+> 
+> nStorms <- length(storms) + length(stormsTest)
+> nTestSubj <- length(stormsTest)
+> n <- nrow(coords)
+> inputs <- inputs[1:nStorms, ]
+> out <- out[1:nStorms, ]
+> gc()
+          used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells  350683 18.8     666002   35.6    666002   35.6
+Vcells 1223075  9.4  193307702 1474.9 200159007 1527.1
+> 
+> bassParallel <- function(stormsTest) {
++   obj <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc=3, n.cores=1)
++   predictions <- predict(obj, inputs[stormsTest, ])[ , , indexTest]
++   preds <- apply(predictions, 2:3, mean)
++   quants <- apply(predictions, 2:3, quantile, c(0.025, 0.975))
++   return(list(preds = preds, lower = quants[1, , ], upper = quants[2, , ]))
++ }
+> 
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt <- Sys.time()
+> nReps <- 100
+> set.seed(mySeed)
+> predictions <- foreach(i=1:nReps, .packages = "BASS") %dopar% bassParallel(stormsTest) 
+> stopCluster(cl)
+> 
+> dim(predictions[[1]]$preds)
+[1]   5 994
+> dim(predictions[[1]]$lower)
+[1]   5 994
+> dim(predictions[[1]]$upper)
+[1]   5 994
+> 
+> bassPreds <- bassLower <- bassUpper <- matrix(0, nrow = nTestSubj, ncol = nTest)
+> for (j in 1:nReps) {
++   bassPreds <- bassPreds + predictions[[j]]$preds
++   bassLower <- bassLower + predictions[[j]]$lower
++   bassUpper <- bassUpper + predictions[[j]]$upper
++ }
+> 
+> bassPreds <- bassPreds / nReps
+> bassUpper <- bassUpper / nReps
+> bassLower <- bassLower / nReps
+> bassTime <- Sys.time() - strt
+> 
+> mspe <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] - out[stormsTest[i], indexTest])^2) )
+> print(mean(mspe))
+[1] 0.6757274
+> 
+> pct <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] > 4) == (out[stormsTest[i], indexTest] > 4)) )
+> print(1-mean(pct))
+[1] 0.1179074
+> 
+> bass <- list(preds = bassPreds,
++ 	     lower = bassLower,
++ 	     upper = bassUpper,
++ 	     time = bassTime)
+> saveRDS(bass, "results/flood_results_bass.RDS")
+> 
+> 
+> rm(list=ls())
+> gc()
+         used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells 436999 23.4     915567   48.9    666002   35.6
+Vcells 769753  5.9  154646162 1179.9 200159007 1527.1
+> if (file.exists(".RData")) {
++   remove(".RData")
++ }
+Warning message:
+In remove(".RData") : object '.RData' not found
+> 
+> proc.time()
+   user  system elapsed 
+  7.185   0.753 169.000 

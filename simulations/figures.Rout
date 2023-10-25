@@ -33,25 +33,25 @@ Type 'q()' to quit R.
 > # Check acceptance rates first
 > sapply(DC_full_gp, \(x) x$acc)
           [,1]    [,2]    [,3]    [,4]
-sigma2 0.25980 0.24868 0.24312 0.24140
-tau2   0.14192 0.16352 0.20652 0.23508
+sigma2 0.26768 0.24776 0.22624 0.21676
+tau2   0.14028 0.15392 0.25876 0.26164
 > sapply(DC_mpp, \(x) x$acc)
           [,1]    [,2]    [,3]    [,4]
-sigma2 0.22168 0.19644 0.19220 0.19324
-tau2   0.34180 0.60372 0.70212 0.63920
+sigma2 0.21704 0.18704 0.19328 0.19424
+tau2   0.34008 0.66572 0.64016 0.63236
 > sapply(DC_sparse_gp, \(x) x$acc)
           [,1]    [,2]    [,3]    [,4]
-sigma2 0.26036 0.24436 0.23308 0.23472
-tau2   0.14956 0.16592 0.22892 0.23340
+sigma2 0.26404 0.24812 0.21592 0.22108
+tau2   0.13844 0.14432 0.32176 0.27232
 > sketch_full_gp$acc
  sigma2    tau2 
-0.19804 0.15436 
+0.17524 0.18036 
 > sketch_mpp$acc
  sigma2    tau2 
-0.17356 0.25788 
+0.15792 0.29844 
 > sketch_sparse_gp$acc
  sigma2    tau2 
-0.18296 0.18476 
+0.18048 0.19808 
 > 
 > model <- rep(c("Full_GP", "MPP", "Sparse_GP"), each = 5)
 > splitType <- rep(c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"), 3)
@@ -158,4 +158,4 @@ null device
 > 
 > proc.time()
    user  system elapsed 
-  2.265   0.243   2.670 
+  2.373   0.281   3.044 
