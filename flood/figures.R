@@ -30,7 +30,7 @@ dev.off()
 
 # Surface plot for NNGP 
 flood_results_nngp <- readRDS("results/flood_results_nngp.RDS")
-estY <- flood_results_nngp$preds[[which_test]]
+estY <- flood_results_nngp$preds
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estY), no.X=100, no.Y=100, extend=T)$xyz.est
 par(cex = 1.5)
 pdf("../figures/surf_nngp.pdf")
@@ -39,7 +39,7 @@ dev.off()
 
 # Surface plot for BASS
 flood_results_bass <- readRDS("results/flood_results_bass.RDS")
-estY <- flood_results_bass$preds[[which_test]]
+estY <- flood_results_bass$preds[which_test, ]
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estY), no.X=100, no.Y=100, extend=T)$xyz.est
 par(cex = 1.5)
 pdf("../figures/surf_bass.pdf")
