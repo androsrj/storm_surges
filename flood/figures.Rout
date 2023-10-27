@@ -106,4 +106,4 @@ pdf
 > 
 > proc.time()
    user  system elapsed 
- 14.115   1.112  15.529 
+  7.567   0.561   8.461 
