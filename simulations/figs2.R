@@ -8,7 +8,7 @@ test_subj <- 1
 trueY <- test$Y[[test_subj]]
 coords <- test$S
 pred.surf <-  mba.surf(cbind(coords, trueY), no.X=100, no.Y=100, extend=T)$xyz.est
-pdf("true_surface.pdf")
+pdf("../figures/simulations/true_surface.pdf")
 par(cex = 1.3)
 image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "YlOrRd", rev=TRUE))
 contour(pred.surf, add=T)
