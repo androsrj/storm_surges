@@ -139,9 +139,9 @@ for (j in 1:4) {
                                      time = final.time)
 }
 
-saveRDS(DC_results_full_gp, "results/d_and_c/full_gp/final_results.RDS")
-saveRDS(DC_results_sparse_gp, "results/d_and_c/sparse_gp/final_results.RDS")
-saveRDS(DC_results_mpp, "results/d_and_c/mpp/final_results.RDS")
+saveRDS(DC_results_full_gp, "results/d_and_c/full_gp_results.RDS")
+saveRDS(DC_results_sparse_gp, "results/d_and_c/sparse_gp_results.RDS")
+saveRDS(DC_results_mpp, "results/d_and_c/mpp_results.RDS")
 
 
 #######################################################
@@ -168,7 +168,7 @@ stopCluster(cl)
 # Wasserstein averages of quantiles across reps
 sketching_results_full_gp <- wasserstein(results = obj,
                                          time = final.time)
-saveRDS(sketching_results_full_gp, "results/sketching/full_gp/final_results.RDS")
+saveRDS(sketching_results_full_gp, "results/sketching/full_gp_results.RDS")
 
 #### SPARSE GAUSSIAN PROCESS ####
 model <- "sparse_gp"
@@ -185,7 +185,7 @@ stopCluster(cl)
 # Wasserstein averages of quantiles across reps
 sketching_results_sparse_gp <- wasserstein(results = obj,
                                            time = final.time)
-saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp/final_results.RDS")
+saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp_results.RDS")
 
 #### MODIFIED PREDICTIVE PROCESS ####
 model <- "mpp"
@@ -202,5 +202,5 @@ stopCluster(cl)
 # Wasserstein averages of quantiles across reps
 sketching_results_mpp <- wasserstein(results = obj,
                                      time = final.time)
-saveRDS(sketching_results_mpp, "results/sketching/mpp/final_results.RDS")
+saveRDS(sketching_results_mpp, "results/sketching/mpp_results.RDS")
 

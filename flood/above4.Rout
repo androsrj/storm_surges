@@ -48,39 +48,45 @@ Type 'q()' to quit R.
 > for (i in 1:nTestSubj) {
 +   # True values
 +   trueTest <- out[test_subjects[i], indexTest]
++   ind <- which(trueTest > 8/3.28084)
++   trueTest <- trueTest[ind]
 + 
 +   # Sketching predictions for storm i
-+   sketchPreds <- sketching$predictions[[i]][2, ]
-+   sketchLower <- sketching$predictions[[i]][1, ]
-+   sketchUpper <- sketching$predictions[[i]][3, ]
++   sketchPreds <- sketching$predictions[[i]][2, ind]
++   sketchLower <- sketching$predictions[[i]][1, ind]
++   sketchUpper <- sketching$predictions[[i]][3, ind]
 + 
 +   # BASS predictions for storm i
-+   bassPreds <- bass$preds[i, ]
-+   bassLower <- bass$lower[i, ]
-+   bassUpper <- bass$upper[i, ]
++   bassPreds <- bass$preds[i, ind]
++   bassLower <- bass$lower[i, ind]
++   bassUpper <- bass$upper[i, ind]
 + 
 +   # BART predictions for storm i
-+   bartPreds <- bart$preds[((i - 1) * nTest + 1):(i * nTest)]
-+   bartLower <- bart$lower[((i - 1) * nTest + 1):(i * nTest)]
-+   bartUpper <- bart$upper[((i - 1) * nTest + 1):(i * nTest)]
++   bartPreds <- bart$preds[((i - 1) * nTest + 1):(i * nTest)][ind]
++   bartLower <- bart$lower[((i - 1) * nTest + 1):(i * nTest)][ind]
++   bartUpper <- bart$upper[((i - 1) * nTest + 1):(i * nTest)][ind]
++ 
++   nngpPreds <- nngp$preds[ind]
++   nngpLower <- nngp$lower[ind]
++   nngpUpper <- nngp$upper[ind]
 +   
 +   # Length
 +   lengthSketch <- mean(sketchUpper - sketchLower)
-+   lengthNNGP <- mean(nngp$upper - nngp$lower)
++   lengthNNGP <- mean(nngpUpper - nngpLower)
 +   lengthBass <- mean(bassUpper - bassLower)
 +   lengthBart <- mean(bartUpper - bartLower)
 +   length[i, ] <- c(lengthSketch, lengthNNGP, lengthBass, lengthBart)
 + 
 +   # Coverage
 +   cvgSketch <- mean(sketchUpper > trueTest & sketchLower < trueTest)
-+   cvgNNGP <- mean(nngp$upper > trueTest & nngp$lower < trueTest)
++   cvgNNGP <- mean(nngpUpper > trueTest & nngpLower < trueTest)
 +   cvgBass <- mean(bassUpper > trueTest & bassLower < trueTest)
 +   cvgBart <- mean(bartUpper > trueTest & bartLower < trueTest)
 +   cvg[i, ] <- c(cvgSketch, cvgNNGP, cvgBass, cvgBart)
 + 
 +   # MSPE
 +   mspeSketch <- mean((sketchPreds - trueTest)^2)
-+   mspeNNGP <- mean((nngp$preds - trueTest)^2)
++   mspeNNGP <- mean((nngpPreds - trueTest)^2)
 +   mspeBass <- mean((bassPreds - trueTest)^2)
 +   mspeBart <- mean((bartPreds - trueTest)^2)
 +   mspe[i, ] <- c(mspeSketch, mspeNNGP, mspeBass, mspeBart)
@@ -92,11 +98,11 @@ Type 'q()' to quit R.
 +                  (trueTest < sketchLower) + 
 +                  2/a * (trueTest - sketchUpper) * 
 +                  (trueTest > sketchUpper) ) 
-+   scoreNNGP <- mean( (nngp$upper - nngp$lower) +
-+ 		   2/a * (nngp$lower - trueTest) *
-+ 		   (trueTest < nngp$lower) + 
-+ 		   2/a * (trueTest - nngp$upper) * 
-+ 		   (trueTest > nngp$upper) )
++   scoreNNGP <- mean( (nngpUpper - nngpLower) +
++ 		   2/a * (nngpLower - trueTest) *
++ 		   (trueTest < nngpLower) + 
++ 		   2/a * (trueTest - nngpUpper) * 
++ 		   (trueTest > nngpUpper) )
 +   scoreBass <- mean( (bassUpper - bassLower) +
 + 		   2/a * (bassLower - trueTest) *
 + 		   (trueTest < bassLower) + 
@@ -117,7 +123,7 @@ Type 'q()' to quit R.
 +   sketchOver <- sketchFeet >= 4.0
 +   sketchPct <- mean(trueOver == sketchOver)
 + 
-+   nngpFeet <- nngp$preds * 3.28084
++   nngpFeet <- nngpPreds * 3.28084
 +   nngpOver <- nngpFeet >= 4.0
 +   nngpPct <- mean(trueOver == nngpOver)
 + 
@@ -159,11 +165,11 @@ upper 0.6894370 0.06997875 1754.9202 -0.1411634
 + 		       pct = pct)
 > rownames(preds_df) <- c("Sketching", "NNGP", "BASS", "BART")
 > preds_df
-                cvg     length      mspe     score        pct
-Sketching 0.8802817  3.3938091 1.2019857  5.694102 0.07967807
-NNGP      0.1843058  0.5850738 0.8333860 20.452963 0.08651911
-BASS      0.9702213 18.0509723 0.8908616 18.058104 0.07162978
-BART      0.8303823  2.5080401 0.7220642  5.965584 0.07645875
+                cvg     length      mspe     score         pct
+Sketching 0.8478915  3.3940182 1.3509239  5.933872 0.011271401
+NNGP      0.1414623  0.5845672 0.7726245 20.566623 0.000000000
+BASS      1.0000000 20.6100882 0.7834289 20.610088 0.000000000
+BART      0.8621595  2.5430492 0.6345226  5.127664 0.007971201
 > 
 > # Also make sure that acceptance rates are satisfactory
 > sketching$acc
@@ -173,8 +179,8 @@ BART      0.8303823  2.5080401 0.7220642  5.965584 0.07645875
 > rm(list=ls())
 > gc()
          used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells 348175 18.6     666002   35.6    666002   35.6
-Vcells 627651  4.8  193249936 1474.4 200340064 1528.5
+Ncells 347711 18.6     666002   35.6    666002   35.6
+Vcells 626635  4.8  193249936 1474.4 200328789 1528.4
 > if (file.exists(".RData")) {
 +   remove(".RData")
 + }
@@ -183,4 +189,4 @@ In remove(".RData") : object '.RData' not found
 > 
 > proc.time()
    user  system elapsed 
-  6.400   0.624   7.084 
+  6.202   0.711   6.902 

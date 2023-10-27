@@ -27,39 +27,45 @@ length <- cvg <- score <- mspe <- pct <- matrix(0, nrow = length(test_subjects),
 for (i in 1:nTestSubj) {
   # True values
   trueTest <- out[test_subjects[i], indexTest]
+  ind <- which(trueTest > 8/3.28084)
+  trueTest <- trueTest[ind]
 
   # Sketching predictions for storm i
-  sketchPreds <- sketching$predictions[[i]][2, ]
-  sketchLower <- sketching$predictions[[i]][1, ]
-  sketchUpper <- sketching$predictions[[i]][3, ]
+  sketchPreds <- sketching$predictions[[i]][2, ind]
+  sketchLower <- sketching$predictions[[i]][1, ind]
+  sketchUpper <- sketching$predictions[[i]][3, ind]
 
   # BASS predictions for storm i
-  bassPreds <- bass$preds[i, ]
-  bassLower <- bass$lower[i, ]
-  bassUpper <- bass$upper[i, ]
+  bassPreds <- bass$preds[i, ind]
+  bassLower <- bass$lower[i, ind]
+  bassUpper <- bass$upper[i, ind]
 
   # BART predictions for storm i
-  bartPreds <- bart$preds[((i - 1) * nTest + 1):(i * nTest)]
-  bartLower <- bart$lower[((i - 1) * nTest + 1):(i * nTest)]
-  bartUpper <- bart$upper[((i - 1) * nTest + 1):(i * nTest)]
+  bartPreds <- bart$preds[((i - 1) * nTest + 1):(i * nTest)][ind]
+  bartLower <- bart$lower[((i - 1) * nTest + 1):(i * nTest)][ind]
+  bartUpper <- bart$upper[((i - 1) * nTest + 1):(i * nTest)][ind]
+
+  nngpPreds <- nngp$preds[ind]
+  nngpLower <- nngp$lower[ind]
+  nngpUpper <- nngp$upper[ind]
   
   # Length
   lengthSketch <- mean(sketchUpper - sketchLower)
-  lengthNNGP <- mean(nngp$upper - nngp$lower)
+  lengthNNGP <- mean(nngpUpper - nngpLower)
   lengthBass <- mean(bassUpper - bassLower)
   lengthBart <- mean(bartUpper - bartLower)
   length[i, ] <- c(lengthSketch, lengthNNGP, lengthBass, lengthBart)
 
   # Coverage
   cvgSketch <- mean(sketchUpper > trueTest & sketchLower < trueTest)
-  cvgNNGP <- mean(nngp$upper > trueTest & nngp$lower < trueTest)
+  cvgNNGP <- mean(nngpUpper > trueTest & nngpLower < trueTest)
   cvgBass <- mean(bassUpper > trueTest & bassLower < trueTest)
   cvgBart <- mean(bartUpper > trueTest & bartLower < trueTest)
   cvg[i, ] <- c(cvgSketch, cvgNNGP, cvgBass, cvgBart)
 
   # MSPE
   mspeSketch <- mean((sketchPreds - trueTest)^2)
-  mspeNNGP <- mean((nngp$preds - trueTest)^2)
+  mspeNNGP <- mean((nngpPreds - trueTest)^2)
   mspeBass <- mean((bassPreds - trueTest)^2)
   mspeBart <- mean((bartPreds - trueTest)^2)
   mspe[i, ] <- c(mspeSketch, mspeNNGP, mspeBass, mspeBart)
@@ -71,11 +77,11 @@ for (i in 1:nTestSubj) {
                  (trueTest < sketchLower) + 
                  2/a * (trueTest - sketchUpper) * 
                  (trueTest > sketchUpper) ) 
-  scoreNNGP <- mean( (nngp$upper - nngp$lower) +
-		   2/a * (nngp$lower - trueTest) *
-		   (trueTest < nngp$lower) + 
-		   2/a * (trueTest - nngp$upper) * 
-		   (trueTest > nngp$upper) )
+  scoreNNGP <- mean( (nngpUpper - nngpLower) +
+		   2/a * (nngpLower - trueTest) *
+		   (trueTest < nngpLower) + 
+		   2/a * (trueTest - nngpUpper) * 
+		   (trueTest > nngpUpper) )
   scoreBass <- mean( (bassUpper - bassLower) +
 		   2/a * (bassLower - trueTest) *
 		   (trueTest < bassLower) + 
@@ -96,7 +102,7 @@ for (i in 1:nTestSubj) {
   sketchOver <- sketchFeet >= 4.0
   sketchPct <- mean(trueOver == sketchOver)
 
-  nngpFeet <- nngp$preds * 3.28084
+  nngpFeet <- nngpPreds * 3.28084
   nngpOver <- nngpFeet >= 4.0
   nngpPct <- mean(trueOver == nngpOver)
 

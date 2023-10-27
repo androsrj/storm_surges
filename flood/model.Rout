@@ -111,7 +111,7 @@ Try help(fields) to get started.
 > 
 > 
 > # Sketching
-> thetaVals <- seq(10^5, 10^6, length = totalCores)
+> thetaVals <- seq(10^4, 10^5, length = totalCores)
 > model <- "full_gp"
 > mProp <- 0.01
 > propSD <- c(0.03, 0.14)
@@ -128,13 +128,12 @@ Try help(fields) to get started.
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
-[1] TRUE
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1974574   105.5    3775820   201.7    2729371   145.8
-Vcells 2702407989 20617.8 3856603346 29423.6 2703010910 20622.4
+Ncells    1974559   105.5    3775820   201.7    2729371   145.8
+Vcells 2702407956 20617.8 3856603346 29423.6 2703010567 20622.4
 > flood_results_sketching <- wasserstein(results = obj, time = final.time)
-> saveRDS(flood_results_sketching, paste0("results/flood_results_alt.RDS"))
+> saveRDS(flood_results_sketching, paste0("results/flood_results_sketching.RDS"))
 > 
 > 
 > 
@@ -198,4 +197,4 @@ Vcells 2702407989 20617.8 3856603346 29423.6 2703010910 20622.4
 > 
 > proc.time()
      user    system   elapsed 
-   68.898    14.133 16305.760 
+   73.686    22.971 38423.365 

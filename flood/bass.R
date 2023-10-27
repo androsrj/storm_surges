@@ -1,3 +1,4 @@
+
 rm(list = ls())
 gc()
 
@@ -14,7 +15,7 @@ load("data/flood_data.RData")
 
 # Clusters and seed
 nCores <- 20
-mySeed <- 9999
+mySeed <- 999
 
 # Read in indices for test data
 n <- nrow(coords)
@@ -37,7 +38,8 @@ inputs <- inputs[1:nStorms, ]
 out <- out[1:nStorms, ]
 gc()
 
-bassParallel <- function(stormsTest) {
+bassParallel <- function(seed) {
+  set.seed(seed)
   obj <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc=3, n.cores=1)
   predictions <- predict(obj, inputs[stormsTest, ])[ , , indexTest]
   preds <- apply(predictions, 2:3, mean)
@@ -49,13 +51,9 @@ cl <- makeCluster(nCores)
 registerDoParallel(cl)
 strt <- Sys.time()
 nReps <- 100
-set.seed(mySeed)
-predictions <- foreach(i=1:nReps, .packages = "BASS") %dopar% bassParallel(stormsTest) 
+seeds <- rep(1100, 10000, by = 100)
+predictions <- foreach(i=1:nReps, .packages = "BASS") %dopar% bassParallel(seed = mySeed - i) 
 stopCluster(cl)
-
-dim(predictions[[1]]$preds)
-dim(predictions[[1]]$lower)
-dim(predictions[[1]]$upper)
 
 bassPreds <- bassLower <- bassUpper <- matrix(0, nrow = nTestSubj, ncol = nTest)
 for (j in 1:nReps) {
@@ -72,7 +70,7 @@ bassTime <- Sys.time() - strt
 mspe <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] - out[stormsTest[i], indexTest])^2) )
 print(mean(mspe))
 
-pct <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] > 4) == (out[stormsTest[i], indexTest] > 4)) )
+pct <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] > 4/3.28084) == (out[stormsTest[i], indexTest] > 4/3.28084)) )
 print(1-mean(pct))
 
 bass <- list(preds = bassPreds,

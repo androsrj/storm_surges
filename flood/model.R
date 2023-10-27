@@ -66,7 +66,7 @@ DTest <- rdist(STest)
 
 
 # Sketching
-thetaVals <- seq(10^5, 10^6, length = totalCores)
+thetaVals <- seq(10^4, 10^5, length = totalCores)
 model <- "full_gp"
 mProp <- 0.01
 propSD <- c(0.03, 0.14)

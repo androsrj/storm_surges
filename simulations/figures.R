@@ -3,12 +3,12 @@ library(ggpubr)
 library(tidyr)
 
 # Tables for paper
-DC_full_gp <- readRDS("results/d_and_c/full_gp/final_results.RDS")
-DC_mpp <- readRDS("results/d_and_c/mpp/final_results.RDS")
-DC_sparse_gp <- readRDS("results/d_and_c/sparse_gp/final_results.RDS")
-sketch_full_gp <- readRDS("results/sketching/full_gp/final_results.RDS")
-sketch_mpp <- readRDS("results/sketching/mpp/final_results.RDS")
-sketch_sparse_gp <- readRDS("results/sketching/sparse_gp/final_results.RDS")
+DC_full_gp <- readRDS("results/d_and_c/full_gp_results.RDS")
+DC_mpp <- readRDS("results/d_and_c/mpp_results.RDS")
+DC_sparse_gp <- readRDS("results/d_and_c/sparse_gp_results.RDS")
+sketch_full_gp <- readRDS("results/sketching/full_gp_results.RDS")
+sketch_mpp <- readRDS("results/sketching/mpp_results.RDS")
+sketch_sparse_gp <- readRDS("results/sketching/sparse_gp_results.RDS")
 load("data/test.RData")
 
 # Check acceptance rates first

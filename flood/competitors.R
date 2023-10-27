@@ -13,8 +13,8 @@ library(BASS) # For BASS
 load("data/flood_data.RData")
 
 # Clusters and seed
-nCores <- 5
-mySeed <- 123
+nCores <- 10
+mySeed <- 999
 
 # Read in indices for test data
 n <- nrow(coords)
@@ -45,6 +45,26 @@ XTest <- lapply(stormsTest, \(i) {
 })
 STest <- coords[indexTest, 1:2]
 
+##############
+#### BART ####
+##############
+
+strt <- Sys.time()
+bart_obj <- bart(do.call('rbind', X), do.call('c', Y), do.call('rbind', XTest))
+bartPreds <- bart_obj$yhat.test.mean
+bartLower <- apply(bart_obj$yhat.test, 2, quantile, 0.025)
+bartUpper <- apply(bart_obj$yhat.test, 2, quantile, 0.975)
+
+bartTime <- Sys.time() - strt
+gc()
+
+bart <- list(preds = bartPreds, 
+	     lower = bartLower, 
+	     upper = bartUpper,
+	     time = bartTime)
+saveRDS(bart, "results/flood_results_bart.RDS")
+gc()
+
 
 ##############
 #### NNGP ####
@@ -52,9 +72,9 @@ STest <- coords[indexTest, 1:2]
 
 nIter <- 2500
 cov.model <- "exponential"
-starting <- list("phi"=5, "sigma.sq"=1, "tau.sq"=0.2)
-tuning <- list("phi"=5, "sigma.sq"=2, "tau.sq"=2)
-priors <- list("phi.Unif"=c(1,20), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
+starting <- list("phi"=5000, "sigma.sq"=1, "tau.sq"=0.2)
+tuning <- list("phi"=100, "sigma.sq"=2, "tau.sq"=2)
+priors <- list("phi.Unif"=c(1,10000), "sigma.sq.IG"=c(1, 1), "tau.sq.IG"=c(1, 1))
 
 # Remove global attributes from X train and test
 X <- lapply(storms, \(i) coords$elev_meters)
@@ -106,42 +126,49 @@ inputs <- inputs[1:nStorms, ]
 out <- out[1:nStorms, ]
 gc()
 
+bassParallel <- function(seed) {
+  set.seed(seed)
+  obj <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc=3, n.cores=1)
+  predictions <- predict(obj, inputs[stormsTest, ])[ , , indexTest]
+  preds <- apply(predictions, 2:3, mean)
+  quants <- apply(predictions, 2:3, quantile, c(0.025, 0.975))
+  return(list(preds = preds, lower = quants[1, , ], upper = quants[2, , ]))
+}
+
+cl <- makeCluster(nCores)
+registerDoParallel(cl)
 strt <- Sys.time()
+nReps <- 100
 set.seed(mySeed)
-model <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc=2, n.cores=1)
-predictions <- predict(model, inputs[stormsTest, ])
-bassPreds <- apply(predictions, 2:3, mean)
-bassLower <- apply(predictions, 2:3, quantile, 0.025)
-bassUpper <- apply(predictions, 2:3, quantile, 0.975)
+predictions <- foreach(i=1:nReps, .packages = "BASS") %dopar% bassParallel(seed = mySeed - i)
+stopCluster(cl)
+
+dim(predictions[[1]]$preds)
+dim(predictions[[1]]$lower)
+dim(predictions[[1]]$upper)
+
+bassPreds <- bassLower <- bassUpper <- matrix(0, nrow = nTestSubj, ncol = nTest)
+for (j in 1:nReps) {
+  bassPreds <- bassPreds + predictions[[j]]$preds
+  bassLower <- bassLower + predictions[[j]]$lower
+  bassUpper <- bassUpper + predictions[[j]]$upper
+}
+
+bassPreds <- bassPreds / nReps
+bassUpper <- bassUpper / nReps
+bassLower <- bassLower / nReps
 bassTime <- Sys.time() - strt
 
+#mspe <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] - out[stormsTest[i], indexTest])^2) )
+#print(mean(mspe))
+#pct <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] > 4) == (out[stormsTest[i], indexTest] > 4)) )
+#print(1-mean(pct))
+
 bass <- list(preds = bassPreds,
-	     lower = bassLower,
-	     upper = bassUpper,
-	     time = bassTime)
+             lower = bassLower,
+             upper = bassUpper,
+             time = bassTime)
 saveRDS(bass, "results/flood_results_bass.RDS")
-
-
-
-##############
-#### BART ####
-##############
-
-strt <- Sys.time()
-bart_obj <- bart(do.call('rbind', X), do.call('c', Y), do.call('rbind', XTest))
-bartPreds <- bart_obj$yhat.test.mean
-bartLower <- apply(bart_obj$yhat.test, 2, quantile, 0.025)
-bartUpper <- apply(bart_obj$yhat.test, 2, quantile, 0.975)
-
-bartTime <- Sys.time() - strt
-gc()
-
-bart <- list(preds = bartPreds, 
-	     lower = bartLower, 
-	     upper = bartUpper,
-	     time = bartTime)
-saveRDS(bart, "results/flood_results_bart.RDS")
-
 
 rm(list=ls())
 gc()
