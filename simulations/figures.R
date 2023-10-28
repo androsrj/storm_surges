@@ -1,119 +1,82 @@
-library(ggplot2)
-library(ggpubr)
-library(tidyr)
-
-# Tables for paper
-DC_full_gp <- readRDS("results/d_and_c/full_gp_results.RDS")
-DC_mpp <- readRDS("results/d_and_c/mpp_results.RDS")
-DC_sparse_gp <- readRDS("results/d_and_c/sparse_gp_results.RDS")
-sketch_full_gp <- readRDS("results/sketching/full_gp_results.RDS")
-sketch_mpp <- readRDS("results/sketching/mpp_results.RDS")
-sketch_sparse_gp <- readRDS("results/sketching/sparse_gp_results.RDS")
+# SURFACE PLOTS USING MBA PACKAGE
+library(MBA)
+library(fields)
 load("data/test.RData")
-
-# Check acceptance rates first
-sapply(DC_full_gp, \(x) x$acc)
-sapply(DC_mpp, \(x) x$acc)
-sapply(DC_sparse_gp, \(x) x$acc)
-sketch_full_gp$acc
-sketch_mpp$acc
-sketch_sparse_gp$acc
-
-model <- rep(c("Full_GP", "MPP", "Sparse_GP"), each = 5)
-splitType <- rep(c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"), 3)
 test_subj <- 1
 
-#######################################################################
+# True spatial surface (subject 1)
+trueY <- test$Y[[test_subj]]
+coords <- test$S
+pred.surf <-  mba.surf(cbind(coords, trueY), no.X=100, no.Y=100, extend=T)$xyz.est
+pdf("../figures/simulations/true_surface.pdf")
+par(cex = 1.3)
+image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "YlOrRd", rev=TRUE))
+contour(pred.surf, add=T)
+dev.off()
 
-lowerPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[test_subj]][1, ])), 
-                    sketch_full_gp$predictions[[test_subj]][1, ],
-                    t(sapply(DC_mpp, \(x) x$predictions[[test_subj]][1, ])), 
-                    sketch_mpp$predictions[[test_subj]][1, ],
-                    t(sapply(DC_sparse_gp, \(x) x$predictions[[test_subj]][1, ])),
-                    sketch_sparse_gp$predictions[[test_subj]][1, ])
+# Estimated spatial surface (D-and-C, full GP, stratified split)
+# Passes in same coordinates (S) from original data
+full_gp <- readRDS("results/d_and_c/full_gp_results.RDS")[[2]]
+estY <- full_gp$predictions[[test_subj]][2, ]
+pred.surf <-  mba.surf(cbind(coords, estY), no.X=100, no.Y=100, extend=T)$xyz.est
+pdf("../figures/simulations/dc_full_gp.pdf")
+par(cex = 1.2)
+image(pred.surf, xaxs ="r", yaxs = "r", main="")
+contour(pred.surf, add=T)
+dev.off()
 
-upperPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[test_subj]][3, ])), 
-                    sketch_full_gp$predictions[[test_subj]][3, ],
-                    t(sapply(DC_mpp, \(x) x$predictions[[test_subj]][3, ])), 
-                    sketch_mpp$predictions[[test_subj]][3, ],
-                    t(sapply(DC_sparse_gp, \(x) x$predictions[[test_subj]][3, ])),
-                    sketch_sparse_gp$predictions[[test_subj]][3, ])
+# Estimated spatial surface (D-and-C, MPP, stratified split)
+# Passes in same coordinates (S) from original data
+mpp <- readRDS("results/d_and_c/mpp_results.RDS")[[2]]
+estY <- mpp$predictions[[test_subj]][2, ]
+pred.surf <-  mba.surf(cbind(coords, estY), no.X=100, no.Y=100, extend=T)$xyz.est
+pdf("../figures/simulations/dc_mpp.pdf")
+par(cex = 1.2)
+image(pred.surf, xaxs ="r", yaxs = "r", main="")
+contour(pred.surf, add=T)
+dev.off()
 
-pointPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[test_subj]][2, ])), 
-                    sketch_full_gp$predictions[[test_subj]][2, ],
-                    t(sapply(DC_mpp, \(x) x$predictions[[test_subj]][2, ])), 
-                    sketch_mpp$predictions[[test_subj]][2, ],
-                    t(sapply(DC_sparse_gp, \(x) x$predictions[[test_subj]][2, ])),
-                    sketch_sparse_gp$predictions[[test_subj]][2, ])
-
-MSPE <- apply(pointPreds, 1, \(x) mean((x - test$Y[[test_subj]])^2))
-cvg_ind <- sapply(1:15, \(i) lowerPreds[i, ] <= test$Y[[test_subj]] & upperPreds[i, ] >= test$Y[[test_subj]])
-coverage <- apply(cvg_ind, 2, mean)
-length <- apply(upperPreds - lowerPreds, 1, mean)
-a <- .05
-score <- sapply(1:15, \(i) mean( (upperPreds[i,] - lowerPreds[i,]) + 2/a * (lowerPreds[i,] - test$Y[[test_subj]]) * (test$Y[[test_subj]] < lowerPreds[i,]) + 2/a * (test$Y[[test_subj]] - upperPreds[i,]) * (test$Y[[test_subj]] > upperPreds[i,]) ) )
-
-df <- data.frame(model, splitType, MSPE, score)
-df$splitType <- factor(df$splitType, levels = c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"))
-
-full_gp <- gather(df[1:5, ], metric, value, MSPE:score)
-mpp <- gather(df[6:10, ], metric, value, MSPE:score)
-sparse_gp <- gather(df[11:15, ], metric, value, MSPE:score)
-
-plot_f <- ggplot(full_gp, aes(splitType, value, fill = metric)) + 
-  geom_bar(stat = "identity", 
-           position = 'dodge', 
-           colour = 'black') + 
-  guides(fill=guide_legend(title = NULL)) +
-  scale_fill_discrete(labels = c('MSPE', 'Interval Score')) +
-  labs(x = "",y = "") + 
-  theme(panel.background = element_blank()) +
-  theme(axis.line = element_line(colour = "black")) + 
-  theme(legend.position="none") + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-  theme(axis.text = element_text(size = 12), legend.text=element_text(size = 12)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggtitle("Full GP")
-
-plot_m <- ggplot(mpp, aes(splitType, value, fill = metric)) + 
-  geom_bar(stat = "identity", 
-           position = 'dodge', 
-           colour = 'black') + 
-  guides(fill=guide_legend(title = NULL)) +
-  scale_fill_discrete(labels = c('MSPE', 'Interval Score')) +
-  labs(x = "",y = "") + 
-  theme(panel.background = element_blank()) +
-  theme(axis.line = element_line(colour = "black")) + 
-  theme(legend.position="none") + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-  theme(axis.text = element_text(size = 12), legend.text=element_text(size = 12)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggtitle("MPP")
-
-plot_s <- ggplot(sparse_gp, aes(splitType, value, fill = metric)) + 
-  geom_bar(stat = "identity", 
-           position = 'dodge', 
-           colour = 'black') + 
-  guides(fill=guide_legend(title = NULL)) +
-  scale_fill_discrete(labels = c('MSPE', 'Interval Score')) +
-  labs(x = "",y = "") + 
-  theme(panel.background = element_blank()) +
-  theme(axis.line = element_line(colour = "black")) + 
-  theme(legend.position = "none") + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-  theme(axis.text = element_text(size = 12), legend.text=element_text(size = 12)) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggtitle("Sparse GP")
-
-pdf("../figures/pred_diagnostics.pdf")
-ggarrange(plot_f, plot_m, plot_s, ncol = 3, nrow = 1, common.legend = TRUE, legend = "bottom")
+# Estimated spatial surface (D-and-C, sparse GP, stratified split)
+# Passes in same coordinates (S) from original data
+sparse_gp <- readRDS("results/d_and_c/sparse_gp_results.RDS")[[2]]
+estY <- sparse_gp$predictions[[test_subj]][2, ]
+pred.surf <-  mba.surf(cbind(coords, estY), no.X=100, no.Y=100, extend=T)$xyz.est
+pdf("../figures/simulations/dc_sparse_gp.pdf")
+par(cex = 1.2)
+image(pred.surf, xaxs ="r", yaxs = "r", main="")
+contour(pred.surf, add=T)
 dev.off()
 
 
-# Plot of MSPE as a function of m
-mspe <- readRDS("results/mspe.RDS")
-mVals <- mspe$mVals
-MSPE <- mspe$MSPE
-pdf("../figures/mspe_by_dim.pdf")
-plot(mVals, MSPE, type='b', xlab = "Reduced Dimension Size (m)", cex = 1.5, lwd = 2)
+# Estimated spatial surface (Sketching, full GP)
+# Passes in same coordinates (S) from original data
+full_gp <- readRDS("results/sketching/full_gp_results.RDS")
+estY <- full_gp$predictions[[test_subj]][2, ]
+pred.surf <-  mba.surf(cbind(coords, estY), no.X=100, no.Y=100, extend=T)$xyz.est
+pdf("../figures/simulations/sketching_full_gp.pdf")
+par(cex = 1.2)
+image(pred.surf, xaxs ="r", yaxs = "r", main="")
+contour(pred.surf, add=T)
+dev.off()
+
+# Estimated spatial surface (Sketching, MPP)
+# Passes in same coordinates (S) from original data
+mpp <- readRDS("results/sketching/mpp_results.RDS")
+estY <- mpp$predictions[[test_subj]][2, ]
+pred.surf <-  mba.surf(cbind(coords, estY), no.X=100, no.Y=100, extend=T)$xyz.est
+pdf("../figures/simulations/sketching_mpp.pdf")
+par(cex = 1.2)
+image(pred.surf, xaxs ="r", yaxs = "r", main="")
+contour(pred.surf, add=T)
+dev.off()
+
+# Estimated spatial surface (Sketching, sparse GP)
+# Passes in same coordinates (S) from original data
+sparse_gp <- readRDS("results/sketching/sparse_gp_results.RDS")
+estY <- sparse_gp$predictions[[test_subj]][2, ]
+pred.surf <-  mba.surf(cbind(coords, estY), no.X=100, no.Y=100, extend=T)$xyz.est
+pdf("../figures/simulations/sketching_sparse_gp.pdf")
+par(cex = 1.2)
+image(pred.surf, xaxs ="r", yaxs = "r", main="")
+contour(pred.surf, add=T)
 dev.off()

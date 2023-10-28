@@ -1,4 +1,4 @@
-sketching <- readRDS("results/flood_results_sketching.RDS")
+sketching <- readRDS("results/flood_results_alt.RDS")
 nngp <- readRDS("results/flood_results_nngp.RDS")
 bass <- readRDS("results/flood_results_bass.RDS")
 bart <- readRDS("results/flood_results_bart.RDS")

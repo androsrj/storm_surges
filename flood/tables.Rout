@@ -19,7 +19,7 @@ Type 'q()' to quit R.
 
 [Previously saved workspace restored]
 
-> sketching <- readRDS("results/flood_results_sketching.RDS")
+> sketching <- readRDS("results/flood_results_alt.RDS")
 > nngp <- readRDS("results/flood_results_nngp.RDS")
 > bass <- readRDS("results/flood_results_bass.RDS")
 > bart <- readRDS("results/flood_results_bart.RDS")
@@ -142,9 +142,9 @@ Type 'q()' to quit R.
 > 
 > sketchParams
          sigma2      tau2       beta
-mean  0.5425077 0.2145407 -0.7259086
-lower 0.5118483 0.1398770 -0.7274297
-upper 0.6187153 0.2451507 -0.7243911
+mean  0.5658447 0.2105856 -0.7211194
+lower 0.5347267 0.1376157 -0.7226132
+upper 0.6398643 0.2410073 -0.7196398
 > nngp$params
        sigma.sq     tau.sq       phi       beta
 mean  0.5907481 0.02903578  545.6673 -0.2652615
@@ -160,7 +160,7 @@ upper 0.6894370 0.06997875 1754.9202 -0.1411634
 > rownames(preds_df) <- c("Sketching", "NNGP", "BASS", "BART")
 > preds_df
                 cvg     length      mspe     score        pct
-Sketching 0.8802817  3.3938091 1.2019857  5.694102 0.07967807
+Sketching 0.8233400  2.9582774 1.1968028  6.464729 0.08068410
 NNGP      0.1843058  0.5850738 0.8333860 20.452963 0.08651911
 BASS      0.9702213 18.0509723 0.8908616 18.058104 0.07162978
 BART      0.8303823  2.5080401 0.7220642  5.965584 0.07645875
@@ -168,13 +168,13 @@ BART      0.8303823  2.5080401 0.7220642  5.965584 0.07645875
 > # Also make sure that acceptance rates are satisfactory
 > sketching$acc
  sigma2    tau2 
-0.21128 0.26000 
+0.21296 0.25040 
 > 
 > rm(list=ls())
 > gc()
-         used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells 348175 18.6     666002   35.6    666002   35.6
-Vcells 627651  4.8  193249936 1474.4 200340064 1528.5
+         used (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells 348470 18.7     819374    43.8     819374    43.8
+Vcells 627834  4.8 2851248825 21753.4 2898833657 22116.4
 > if (file.exists(".RData")) {
 +   remove(".RData")
 + }
@@ -183,4 +183,4 @@ In remove(".RData") : object '.RData' not found
 > 
 > proc.time()
    user  system elapsed 
-  6.400   0.624   7.084 
+137.454  12.002 149.707 
