@@ -22,9 +22,9 @@ Type 'q()' to quit R.
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells 275561 14.8     787317   42.1    350000   18.7
-Vcells 462911  3.6  192866580 1471.5 200294465 1528.2
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 275577 14.8     666000 35.6   456476 24.4
+Vcells 462664  3.6    8388608 64.0  1820026 13.9
 > 
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
@@ -113,7 +113,7 @@ Try help(fields) to get started.
 > 
 > 
 > # Sketching
-> thetaVals <- seq(10^4, 10^5, length = totalCores)
+> thetaVals <- seq(10^5, 10^6, length = totalCores)
 > model <- "full_gp"
 > mProp <- 0.01
 > propSD <- c(0.03, 0.14)
@@ -133,8 +133,8 @@ Try help(fields) to get started.
 [1] TRUE
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1974641   105.5    3221842   172.1    3221842   172.1
-Vcells 2702408099 20617.8 3856603503 29423.6 2703011141 20622.4
+Ncells    1974613   105.5    3776342   201.7    2728088   145.7
+Vcells 2702408074 20617.8 3856603468 29423.6 2703011143 20622.4
 > flood_results_sketching <- wasserstein(results = obj, time = final.time)
 > saveRDS(flood_results_sketching, paste0("results/flood_results_alt.RDS"))
 > 
@@ -142,5 +142,5 @@ Vcells 2702408099 20617.8 3856603503 29423.6 2703011141 20622.4
 > 
 > 
 > proc.time()
-    user   system  elapsed 
-   75.68    22.67 37473.87 
+     user    system   elapsed 
+   72.975    24.772 15883.936 
