@@ -40,7 +40,7 @@ mPropVals <- mVals / n
 thetaVals <- seq(1, 5, length = nCores)
 model <- "full_gp"
 propSD <- c(0.08, 0.23)
-MSPE <- numeric(length(mVals))
+MSPE <- time <- numeric(length(mVals))
 acc <- matrix(0, nrow = length(mVals), ncol = 2)
 
 for (i in 1:length(mVals)) {
@@ -63,11 +63,13 @@ for (i in 1:length(mVals)) {
     MSPE[i] <- MSPE[i] + mean((predictions[2, ] - test$Y[[j]])^2)
   }
   MSPE[i] <- MSPE[i] / nTestSubj
+  time[i] <- final.time
 }
 
-saveRDS(list(mVals = mVals, MSPE = MSPE), "results/mspe.RDS")
+saveRDS(list(mVals = mVals, MSPE = MSPE, time = time), "results/mspe.RDS")
 mVals
 MSPE
+time
 acc
 
 rm(list=ls())

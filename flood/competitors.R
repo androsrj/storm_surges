@@ -119,55 +119,18 @@ saveRDS(nngp, "results/flood_results_nngp.RDS")
 #### BASS ####
 ##############
 
-nStorms <- length(storms) + length(stormsTest)
-nTestSubj <- length(stormsTest)
-n <- nrow(coords)
-inputs <- inputs[1:nStorms, ]
-out <- out[1:nStorms, ]
+inputs <- inputs[c(storms, stormsTest), ]
+out <- out[c(storms, stormsTest), ]
 gc()
 
-bassParallel <- function(seed) {
-  set.seed(seed)
-  obj <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc=3, n.cores=1)
-  predictions <- predict(obj, inputs[stormsTest, ])[ , , indexTest]
-  preds <- apply(predictions, 2:3, mean)
-  quants <- apply(predictions, 2:3, quantile, c(0.025, 0.975))
-  return(list(preds = preds, lower = quants[1, , ], upper = quants[2, , ]))
-}
-
-cl <- makeCluster(nCores)
-registerDoParallel(cl)
-strt <- Sys.time()
-nReps <- 100
 set.seed(mySeed)
-predictions <- foreach(i=1:nReps, .packages = "BASS") %dopar% bassParallel(seed = mySeed - i)
-stopCluster(cl)
+model <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc = 3, n.cores = 1)
+predictions <- predict(model, inputs[stormsTest, ])[ , , indexTest]
 
-dim(predictions[[1]]$preds)
-dim(predictions[[1]]$lower)
-dim(predictions[[1]]$upper)
-
-bassPreds <- bassLower <- bassUpper <- matrix(0, nrow = nTestSubj, ncol = nTest)
-for (j in 1:nReps) {
-  bassPreds <- bassPreds + predictions[[j]]$preds
-  bassLower <- bassLower + predictions[[j]]$lower
-  bassUpper <- bassUpper + predictions[[j]]$upper
-}
-
-bassPreds <- bassPreds / nReps
-bassUpper <- bassUpper / nReps
-bassLower <- bassLower / nReps
-bassTime <- Sys.time() - strt
-
-#mspe <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] - out[stormsTest[i], indexTest])^2) )
-#print(mean(mspe))
-#pct <- sapply(1:nTestSubj, \(i) mean((bassPreds[i, ] > 4) == (out[stormsTest[i], indexTest] > 4)) )
-#print(1-mean(pct))
-
-bass <- list(preds = bassPreds,
-             lower = bassLower,
-             upper = bassUpper,
-             time = bassTime)
+bassPreds <- apply(predictions, 2:3, mean)
+bassLower <- apply(predictions, 2:3, quantile, .025)
+bassUpper <- apply(predictions, 2:3, quantile, .975)
+bass <- list(preds = bassPreds, lower = bassLower, upper = bassUpper)
 saveRDS(bass, "results/flood_results_bass.RDS")
 
 rm(list=ls())

@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > sketching <- readRDS("results/flood_results_alt.RDS")
 > nngp <- readRDS("results/flood_results_nngp.RDS")
 > bass <- readRDS("results/flood_results_bass.RDS")
@@ -157,11 +159,11 @@ upper 0.6894370 0.06997875 1754.9202 -0.1411634
 + 		       pct = pct)
 > rownames(preds_df) <- c("Sketching", "NNGP", "BASS", "BART")
 > preds_df
-                cvg     length      mspe     score        pct
-Sketching 0.8788732  3.3462152 1.1703202  5.604646 0.07987928
-NNGP      0.1843058  0.5850738 0.8333860 20.452963 0.08651911
-BASS      0.9702213 18.0509723 0.8908616 18.058104 0.07162978
-BART      0.8303823  2.5080401 0.7220642  5.965584 0.07645875
+                cvg    length      mspe     score        pct
+Sketching 0.8788732 3.3462152 1.1703202  5.604646 0.07987928
+NNGP      0.1843058 0.5850738 0.8333860 20.452963 0.08651911
+BASS      0.5853119 1.7141688 1.4461273 11.230776 0.09839034
+BART      0.8303823 2.5080401 0.7220642  5.965584 0.07645875
 > 
 > # Also make sure that acceptance rates are satisfactory
 > sketching$acc
@@ -171,12 +173,14 @@ BART      0.8303823  2.5080401 0.7220642  5.965584 0.07645875
 > rm(list=ls())
 > gc()
          used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells 346608 18.6     660857   35.3    660857   35.3
-Vcells 624544  4.8  193246928 1474.4 200330393 1528.4
+Ncells 348193 18.6     631637   33.8    631637   33.8
+Vcells 627660  4.8  199574187 1522.7 206894789 1578.5
 > if (file.exists(".RData")) {
 +   remove(".RData")
 + }
+Warning message:
+In remove(".RData") : object '.RData' not found
 > 
 > proc.time()
    user  system elapsed 
-  6.590   0.613   7.257 
+  7.722   0.548   8.311 
