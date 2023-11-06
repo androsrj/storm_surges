@@ -137,7 +137,7 @@ mcmc <- function(X, Y, D, S,
     beta[ , i] <- t(rmvnorm(1, meanBeta, SigmaBetaInv))
     
     ### Posterior predictive sampling for test subjects ###
-    SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) / 10 * diag(nTest)
+    SigmaTest <- exp(trSigma2[i]) * BTest + exp(trTau2[i]) * diag(nTest)
     for (j in 1:nTestSubj) {
       YPreds[[j]][ , i] <- t(rmvnorm(1, mean = as.vector(XTest[[j]] %*% beta[ , i]), sigma = SigmaTest))
     }
@@ -204,7 +204,8 @@ mcmc <- function(X, Y, D, S,
               credLower = credLower,
               credUpper = credUpper,
               preds = preds,
-              predSamples = YPreds))
+              predSamples = YPreds,
+	      paramSamples = list(sigma2, tau2, beta)))
 }
 
 

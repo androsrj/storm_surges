@@ -8,6 +8,7 @@ library(foreach) # For parallel computation
 library(BayesTree) # For BART
 library(spNNGP) # For NNGP
 library(BASS) # For BASS
+source("../other_functions/helper_functions.R")
 
 # Read in
 load("data/flood_data.RData")
@@ -49,21 +50,26 @@ STest <- coords[indexTest, 1:2]
 #### BART ####
 ##############
 
-strt <- Sys.time()
-bart_obj <- bart(do.call('rbind', X), do.call('c', Y), do.call('rbind', XTest))
-bartPreds <- bart_obj$yhat.test.mean
-bartLower <- apply(bart_obj$yhat.test, 2, quantile, 0.025)
-bartUpper <- apply(bart_obj$yhat.test, 2, quantile, 0.975)
+#strt <- Sys.time()
+#bart_obj <- bart(do.call('rbind', X), do.call('c', Y), do.call('rbind', XTest))
+#bartPreds <- bart_obj$yhat.test.mean
+#bartLower <- apply(bart_obj$yhat.test, 2, quantile, 0.025)
+#bartUpper <- apply(bart_obj$yhat.test, 2, quantile, 0.975)
+#bartTime <- Sys.time() - strt
+#bartCRPS <- mean(sapply(1:nTestSubj, function(i) {
+#  truth <- out[stormsTest[i], indexTest]
+#  preds <- bart_obj$yhat.test[ , ((i - 1) * nTest + 1):(i * nTest)] 
+#  mean(energy_score(truth, preds))
+#}))
+#gc()
 
-bartTime <- Sys.time() - strt
-gc()
-
-bart <- list(preds = bartPreds, 
-	     lower = bartLower, 
-	     upper = bartUpper,
-	     time = bartTime)
-saveRDS(bart, "results/flood_results_bart.RDS")
-gc()
+#bart <- list(preds = bartPreds, 
+#	     lower = bartLower, 
+#	     upper = bartUpper,
+#	     time = bartTime,
+#	     crps = bartCRPS)
+#saveRDS(bart, "results/flood_results_bart.RDS")
+#gc()
 
 
 ##############
@@ -106,12 +112,19 @@ rownames(nngpParams) <- c("mean", "lower", "upper")
 nngpPreds <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 1]), 1, mean)
 nngpLower <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 2]), 1, mean)
 nngpUpper <- apply(sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 3]), 1, mean)
+nngpCRPS <- mean(sapply(1:nTestSubj, function(i) {
+  truth <- out[stormsTest[i], indexTest]
+  preds <- sapply(1:nTestSubj, \(i) nngp_obj[[i]]$y.hat.quant[indexTest, 1])
+  mean(energy_score(truth, preds))
+}))
+
 
 nngp <- list(params = nngpParams, 
 	     preds = nngpPreds,
 	     lower = nngpLower,
 	     upper = nngpUpper,
-	     time = nngpTime) 
+	     time = nngpTime,
+	     crps = nngpCRPS) 
 saveRDS(nngp, "results/flood_results_nngp.RDS")
 
 
@@ -124,13 +137,25 @@ out <- out[c(storms, stormsTest), ]
 gc()
 
 set.seed(mySeed)
+strt <- Sys.time()
 model <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc = 3, n.cores = 1)
 predictions <- predict(model, inputs[stormsTest, ])[ , , indexTest]
 
 bassPreds <- apply(predictions, 2:3, mean)
 bassLower <- apply(predictions, 2:3, quantile, .025)
 bassUpper <- apply(predictions, 2:3, quantile, .975)
-bass <- list(preds = bassPreds, lower = bassLower, upper = bassUpper)
+bassCRPS <- mean(sapply(1:nTestSubj, function(i) {
+  truth <- out[stormsTest[i], indexTest]
+  preds <- predictions[i, , ]
+  mean(energy_score(truth, preds))
+}))
+bassTime <- Sys.time() - strt
+
+bass <- list(preds = bassPreds, 
+	     lower = bassLower, 
+	     upper = bassUpper,
+	     time = bassTime,
+	     crps = bassCRPS)
 saveRDS(bass, "results/flood_results_bass.RDS")
 
 rm(list=ls())

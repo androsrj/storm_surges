@@ -20,6 +20,16 @@ wasserstein <- function(results, time) {
                              time = time)
 }
 
+# Energy score (CRPS) calculation for predictions vs truth
+energy_score = function(y, z){
+  d = dim(z)
+  n_samp = d[1]
+  n = d[2]
+  G = colMeans(sapply(1:n,function(i) sapply(1:n_samp, function(k) norm(z[k,i]-y[i],type='2'))))
+  UQ = sapply(1:n,function(i) (1/(2*n_samp^2))*sum(as.matrix(distances::distances(z[,i]))))
+  return(G - UQ)
+}
+
 
 # Calculates the base of the covariance matrix for likelihood function
 baseVariance <- function(theta, phi, D) {

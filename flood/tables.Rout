@@ -19,7 +19,8 @@ Type 'q()' to quit R.
 
 [Previously saved workspace restored]
 
-> sketching <- readRDS("results/flood_results_alt.RDS")
+> source("../other_functions/helper_functions.R")
+> sketching <- readRDS("results/flood_results_sketching.RDS")
 > nngp <- readRDS("results/flood_results_nngp.RDS")
 > bass <- readRDS("results/flood_results_bass.RDS")
 > bart <- readRDS("results/flood_results_bart.RDS")
@@ -135,46 +136,49 @@ Type 'q()' to quit R.
 > length <- apply(length, 2, mean)
 > cvg <- apply(cvg, 2, mean)
 > mspe <- apply(mspe, 2, mean)
+> crps <- c(sketching$crps, nngp$crps, bass$crps, bart$crps)
 > score <- apply(score, 2, mean)
 > pct <- 1 - apply(pct, 2, mean)
 > 
 > # Parameter estimates
 > 
 > sketchParams
-         sigma2       tau2       beta
-mean  0.7326538 0.04082851 -0.7277622
-lower 0.7206877 0.03060494 -0.7292602
-upper 0.7440496 0.05162735 -0.7262888
+         sigma2      tau2       beta
+mean  0.5737687 0.1991966 -0.7250043
+lower 0.5463691 0.1375110 -0.7265169
+upper 0.6361883 0.2260987 -0.7234924
 > nngp$params
        sigma.sq     tau.sq       phi       beta
-mean  0.5907481 0.02903578  545.6673 -0.2652615
-lower 0.4481655 0.01236331  289.6346 -0.3830290
-upper 0.6894370 0.06997875 1754.9202 -0.1411634
+mean  0.5730806 0.02720180  672.5906 -0.2932438
+lower 0.4473915 0.01115854  326.3794 -0.4301152
+upper 0.6744484 0.09904543 2952.6426 -0.2211431
 > 
-> # Predictive diagnostics (our approach vs BART)
-> preds_df <- data.frame(cvg = cvg, 
-+ 		       length = length, 
-+ 		       mspe = mspe, 
+> crps
+[1] 1.5171287 1.0202603 0.4842495
+> # Predictive diagnostics 
+> preds_df <- data.frame(mspe = mspe,
++ 		       #crps = crps,
++ 		       cvg = cvg, 
 + 		       score = score, 
 + 		       pct = pct)
 > rownames(preds_df) <- c("Sketching", "NNGP", "BASS", "BART")
 > preds_df
-                cvg    length      mspe     score        pct
-Sketching 0.8788732 3.3462152 1.1703202  5.604646 0.07987928
-NNGP      0.1843058 0.5850738 0.8333860 20.452963 0.08651911
-BASS      0.5853119 1.7141688 1.4461273 11.230776 0.09839034
-BART      0.8303823 2.5080401 0.7220642  5.965584 0.07645875
+               mspe       cvg     score        pct
+Sketching 1.1890492 0.8851107  5.560502 0.08008048
+NNGP      0.8319863 0.1702213 21.210930 0.08672032
+BASS      0.6543402 0.9708249  6.549607 0.05573441
+BART      0.6994082 0.8547284  5.329456 0.08390342
 > 
 > # Also make sure that acceptance rates are satisfactory
 > sketching$acc
  sigma2    tau2 
-0.13624 0.39088 
+0.21704 0.25980 
 > 
 > rm(list=ls())
 > gc()
          used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells 348193 18.6     631637   33.8    631637   33.8
-Vcells 627660  4.8  199574187 1522.7 206894789 1578.5
+Ncells 352191 18.9     666002   35.6    666002   35.6
+Vcells 636101  4.9  193259271 1474.5 200336946 1528.5
 > if (file.exists(".RData")) {
 +   remove(".RData")
 + }
@@ -183,4 +187,4 @@ In remove(".RData") : object '.RData' not found
 > 
 > proc.time()
    user  system elapsed 
-  7.722   0.548   8.311 
+  6.215   0.723   6.874 

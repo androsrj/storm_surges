@@ -1,4 +1,5 @@
-sketching <- readRDS("results/flood_results_alt.RDS")
+source("../other_functions/helper_functions.R")
+sketching <- readRDS("results/flood_results_sketching.RDS")
 nngp <- readRDS("results/flood_results_nngp.RDS")
 bass <- readRDS("results/flood_results_bass.RDS")
 bart <- readRDS("results/flood_results_bart.RDS")
@@ -114,6 +115,7 @@ for (i in 1:nTestSubj) {
 length <- apply(length, 2, mean)
 cvg <- apply(cvg, 2, mean)
 mspe <- apply(mspe, 2, mean)
+crps <- c(sketching$crps, nngp$crps, bass$crps, bart$crps)
 score <- apply(score, 2, mean)
 pct <- 1 - apply(pct, 2, mean)
 
@@ -122,10 +124,11 @@ pct <- 1 - apply(pct, 2, mean)
 sketchParams
 nngp$params
 
-# Predictive diagnostics (our approach vs BART)
-preds_df <- data.frame(cvg = cvg, 
-		       length = length, 
-		       mspe = mspe, 
+crps
+# Predictive diagnostics 
+preds_df <- data.frame(mspe = mspe,
+		       #crps = crps,
+		       cvg = cvg, 
 		       score = score, 
 		       pct = pct)
 rownames(preds_df) <- c("Sketching", "NNGP", "BASS", "BART")
