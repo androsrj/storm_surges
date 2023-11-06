@@ -22,7 +22,7 @@ estBART <- flood_results_bart$preds[((which_test - 1) * nTest + 1):(which_test *
 
 lowest <- min(c(estSketch, estNNGP, estBASS, estBART))
 highest <- max(c(estSketch, estNNGP, estBASS, estBART))
-lims <- c(lowest, highest) * 1.03
+lims <- c(lowest, highest) * 1.035
 
 # Surface plot for actual water level of storm 10 at all test points
 trueY <- out[test_subj, indexTest]
@@ -38,19 +38,19 @@ pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estSketch), no.X=100, no.Y=
 pdf("../figures/surfplots_flood.pdf")
 par(cex = 1.5)
 par(mfrow = c(2, 2))
-image(pred.surf, xaxs ="r", yaxs = "r", main="", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
+image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "Sketching", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 
 # Surface plot for NNGP 
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estNNGP), no.X=100, no.Y=100, extend=T)$xyz.est
-image(pred.surf, xaxs ="r", yaxs = "r", main="", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
+image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "NNGP", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 
 # Surface plot for BASS
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estBASS), no.X=100, no.Y=100, extend=T)$xyz.est
-image(pred.surf, xaxs ="r", yaxs = "r", main="", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
+image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "BASS", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 
 # Surface plot for BART
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estBART), no.X=100, no.Y=100, extend=T)$xyz.est
-image(pred.surf, xaxs ="r", yaxs = "r", main="", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
+image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "BART", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 dev.off()
 
 # Density plots for posteriors of each parameter
