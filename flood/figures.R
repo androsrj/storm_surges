@@ -71,8 +71,8 @@ for (i in 1:100) {
   betaQuants[i] <- mean(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][7, ], i / 100)))
 }
 
-par(mfrow = c(1, 3))
 pdf("../figures/densities.pdf")
+par(mfrow = c(1, 3))
 plot(density(sigma2Quants), 
      lwd = 2,
      main = "", ylab = "", xlab = "Sigma2", yaxt = 'n',
