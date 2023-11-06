@@ -28,15 +28,15 @@ lims <- c(lowest, highest) * 1.035
 trueY <- out[test_subj, indexTest]
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], trueY), no.X=100, no.Y=100, extend=T)$xyz.est
 pdf("../figures/surf_truth.pdf")
-par(cex = 1.5, oma = c(0, 0, 0, 0.75))
-image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", zlim = lims, col = hcl.colors(12, "terrain", rev=TRUE), 
+par(cex.lab = 2, oma = c(0, 0, 0, 0.75))
+image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "Truth", zlim = lims, col = hcl.colors(12, "terrain", rev=TRUE), 
 	   legend.lab = "Water Level (meters)", legend.cex = 2, legend.mar = 5)
 dev.off()
 
 # Surface plot for estimated water level of storm 10 at testing data points (sketching) 
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estSketch), no.X=100, no.Y=100, extend=T)$xyz.est
 pdf("../figures/surfplots_flood.pdf")
-par(cex = 2.5)
+par(cex.lab = 2)
 par(mfrow = c(2, 2))
 image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "Sketching", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 
