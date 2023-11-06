@@ -64,15 +64,16 @@ dev.off()
 
 # Density plots for posteriors of each parameter
 sk <- readRDS("results/params.RDS")
-sigma2Quants <- tau2Quants <- betaQuants <- numeric(100)
+sigma2Quants <- tau2Quants <- betaQuants <- gammaQuants <- numeric(100)
 for (i in 1:100) {
   sigma2Quants[i] <- mean(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[1]], i / 100)))
   tau2Quants[i] <- mean(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[2]], i / 100)))
   betaQuants[i] <- mean(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][7, ], i / 100)))
+  gammaQuants[i] <- mean(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][4, ], i / 100)))
 }
 
 pdf("../figures/densities.pdf")
-par(mfrow = c(1, 3))
+par(mfrow = c(2, 2))
 plot(density(sigma2Quants), 
      lwd = 2,
      main = "", ylab = "", xlab = "Sigma2", yaxt = 'n',
@@ -96,5 +97,14 @@ plot(density(betaQuants),
 markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][7, ], c(.025, .5, .975))), 1, mean)
 abline(v = markers[2], col = 'red', lwd = 3)
 abline(v = markers[c(1,3)], col = 'red', lwd = 3, lty = 2)
+
+plot(density(gammaQuants),
+     lwd = 2,
+     main = "", ylab = "", xlab = "Gamma (Min Velocity)", yaxt = 'n',
+     cex.lab = 1.5, cex.axis =  1.5)
+markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][4, ], c(.025, .5, .975))), 1, mean)
+abline(v = markers[2], col = 'red', lwd = 3)
+abline(v = markers[c(1,3)], col = 'red', lwd = 3, lty = 2)
+
 
 dev.off()
