@@ -46,7 +46,7 @@ Try help(fields) to get started.
 > trueY <- test$Y[[test_subj]]
 > coords <- test$S
 > pred.surf <-  mba.surf(cbind(coords, trueY), no.X=100, no.Y=100, extend=T)$xyz.est
-> pdf("true_surface.pdf")
+> pdf("../figures/simulations/true_surface.pdf")
 > par(cex = 1.3)
 > image.plot(pred.surf, xaxs ="r", yaxs = "r", main="", col = hcl.colors(12, "YlOrRd", rev=TRUE))
 > contour(pred.surf, add=T)
@@ -133,6 +133,19 @@ null device
 null device 
           1 
 > 
+> # Plot of MSPE as a function of m
+> mspe <- readRDS("results/mspe.RDS")
+> mVals <- mspe$mVals
+> MSPE <- mspe$MSPE
+> pdf("../figures/mspe_by_dim.pdf")
+> par(cex.lab = 2, mar = c(5, 5, 4, 2) + 0.1)
+> plot(mVals, MSPE, type='b', cex = 2, lwd = 4, pch = 19,
++      xlab = "Reduced Dimension Size (m)", ylab = "MSPE")
+> dev.off()
+null device 
+          1 
+> 
+> 
 > proc.time()
    user  system elapsed 
- 14.901   1.215  16.538 
+  2.247   0.230   2.701 

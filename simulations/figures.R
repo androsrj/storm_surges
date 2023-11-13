@@ -80,3 +80,14 @@ par(cex = 1.2)
 image(pred.surf, xaxs ="r", yaxs = "r", main="")
 contour(pred.surf, add=T)
 dev.off()
+
+# Plot of MSPE as a function of m
+mspe <- readRDS("results/mspe.RDS")
+mVals <- mspe$mVals
+MSPE <- mspe$MSPE
+pdf("../figures/mspe_by_dim.pdf")
+par(cex.lab = 2, mar = c(5, 5, 4, 2) + 0.1)
+plot(mVals, MSPE, type='b', cex = 2, lwd = 4, pch = 19,
+     xlab = "Reduced Dimension Size (m)", ylab = "MSPE")
+dev.off()
+
