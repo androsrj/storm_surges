@@ -82,12 +82,18 @@ contour(pred.surf, add=T)
 dev.off()
 
 # Plot of MSPE as a function of m
+# Plot of MSPE as a function of m
 mspe <- readRDS("results/mspe.RDS")
-mVals <- mspe$mVals
-MSPE <- mspe$MSPE
+index <- which(mspe$mVals >= 5)
+mVals <- mspe$mVals[index]
+MSPE <- mspe$MSPE[index]
+time <- mspe$time[index]
 pdf("../figures/mspe_by_dim.pdf")
-par(cex.lab = 2, mar = c(5, 5, 4, 2) + 0.1)
-plot(mVals, MSPE, type='b', cex = 2, lwd = 4, pch = 19,
-     xlab = "Reduced Dimension Size (m)", ylab = "MSPE")
+par(cex.lab = 1.6, mar = c(5, 5, 4, 2) + 0.1)
+plot(mVals, MSPE, type='b', col = 'red4',
+     cex = 1.5, lwd = 4, pch = 19, ylim = c(1.75, 2.75),
+     xlab = "Reduced Dimension Size (m)", ylab = "")
+lines(mVals, time, type = 'b', 
+      cex = 1.5, lwd = 4, pch = 19, col = 'royalblue4')
+legend("topright", legend = c("MSPE", "Time (s)"), fill = c("red4", "royalblue4"), cex = 1.3)
 dev.off()
-
