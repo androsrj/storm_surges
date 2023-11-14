@@ -17,8 +17,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > library(MBA)
 > library(fields)
 Loading required package: spam
@@ -110,7 +108,7 @@ null device
 +   gammaQuants[5, i] <- mean(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][6, ], i / 100)))
 + }
 > 
-> pdf("../figures/densities.pdf")
+> pdf("../figures/densities.pdf", width = 9, height = 5)
 > par(mfrow = c(2, 4))
 > plot(density(sigma2Quants), 
 +      lwd = 2,
@@ -183,4 +181,4 @@ null device
 > 
 > proc.time()
    user  system elapsed 
-152.825  13.136 168.508 
+ 12.239   0.748  13.219 

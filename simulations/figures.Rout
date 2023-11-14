@@ -17,8 +17,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[Previously saved workspace restored]
-
 > # SURFACE PLOTS USING MBA PACKAGE
 > library(MBA)
 > library(fields)
@@ -140,7 +138,7 @@ null device
 > mVals <- mspe$mVals[index]
 > MSPE <- mspe$MSPE[index]
 > time <- mspe$time[index]
-> pdf("../figures/mspe_by_dim.pdf")
+> pdf("../figures/mspe_by_dim.pdf", width = 8, height = 5)
 > par(cex.lab = 1.6, mar = c(5, 5, 4, 2) + 0.1)
 > plot(mVals, MSPE, type='b', col = 'red4',
 +      cex = 1.5, lwd = 4, pch = 19, ylim = c(1.75, 2.75),
@@ -154,4 +152,4 @@ null device
 > 
 > proc.time()
    user  system elapsed 
-  2.296   0.276   3.077 
+  2.103   0.226   2.659 

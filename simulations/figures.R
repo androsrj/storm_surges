@@ -88,7 +88,7 @@ index <- which(mspe$mVals >= 5)
 mVals <- mspe$mVals[index]
 MSPE <- mspe$MSPE[index]
 time <- mspe$time[index]
-pdf("../figures/mspe_by_dim.pdf")
+pdf("../figures/mspe_by_dim.pdf", width = 8, height = 5)
 par(cex.lab = 1.6, mar = c(5, 5, 4, 2) + 0.1)
 plot(mVals, MSPE, type='b', col = 'red4',
      cex = 1.5, lwd = 4, pch = 19, ylim = c(1.75, 2.75),

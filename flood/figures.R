@@ -68,7 +68,7 @@ for (i in 1:100) {
   gammaQuants[5, i] <- mean(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][6, ], i / 100)))
 }
 
-pdf("../figures/densities.pdf")
+pdf("../figures/densities.pdf", width = 9, height = 5)
 par(mfrow = c(2, 4))
 plot(density(sigma2Quants), 
      lwd = 2,
