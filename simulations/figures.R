@@ -89,11 +89,29 @@ mVals <- mspe$mVals[index]
 MSPE <- mspe$MSPE[index]
 time <- mspe$time[index]
 pdf("../figures/mspe_by_dim.pdf", width = 8, height = 5)
-par(cex.lab = 1.6, mar = c(5, 5, 4, 2) + 0.1)
-plot(mVals, MSPE, type='b', col = 'red4',
-     cex = 1.5, lwd = 4, pch = 19, ylim = c(1.75, 2.75),
-     xlab = "Reduced Dimension Size (m)", ylab = "")
-lines(mVals, time, type = 'b', 
-      cex = 1.5, lwd = 4, pch = 19, col = 'royalblue4')
-legend("topright", legend = c("MSPE", "Time (s)"), fill = c("red4", "royalblue4"), cex = 1.3)
+par(mar=c(5, 6, 4, 7) + 0.1)
+
+## Plot first set of data and draw its axis
+plot(mVals, MSPE, pch=19, axes=FALSE, xlab="", ylab="", cex = 1.5, lwd = 4,
+     , type="b",col="royalblue4", main="", ylim = c(2.25, 2.5))
+axis(2, ylim=c(2.25,2.5),col="royalblue4",col.axis="royalblue4",
+     las=1, cex.axis=1.3)  ## las=1 makes horizontal labels
+mtext("MSPE",side=2,line=4.5, col="royalblue4",cex=1.6)
+box()
+
+## Allow a second plot on the same graph
+par(new=TRUE)
+
+## Plot the second plot and put axis scale on right
+plot(mVals, time, pch=19,  xlab="", ylab="", ylim=c(1.8,2.4), 
+     cex = 1.5, lwd = 4,
+     axes=FALSE, type="b", col="red4")
+## a little farther out (line=4) to make room for labels
+mtext("Time (h)",side=4,col="red4",line=4, cex=1.6) 
+axis(4, ylim=c(1.8, 2.4), col="red4",col.axis="red4",las=1, cex.axis=1.3)
+
+## Draw the time axis
+axis(1, seq(0, 500, by = 100), cex.axis=1.3)
+mtext("Reduced Dimension Size (m)",side=1,col="black",line=2.5, cex=1.6)  
+
 dev.off()
