@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > library(MBA)
 > library(fields)
 Loading required package: spam
@@ -129,7 +131,7 @@ null device
 > 
 > plot(density(betaQuants), 
 +      lwd = 2,
-+      main = "", ylab = "", xlab = paste0(TeX(r'($\beta$)'), " (Elevation)"), yaxt = 'n',
++      main = "", ylab = "", xlab = TeX(r'($\beta$ (Elevation))'), yaxt = 'n',
 +      cex.lab = 1.5, cex.axis =  1.5)
 > markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][7, ], c(.025, .5, .975))), 1, mean)
 > abline(v = markers[2], col = 'red4', lwd = 3)
@@ -182,4 +184,4 @@ null device
 > 
 > proc.time()
    user  system elapsed 
- 12.893   1.021  14.653 
+ 21.323   1.743  23.749 

@@ -89,7 +89,7 @@ abline(v = markers[c(1,3)], col = 'red4', lwd = 3, lty = 2)
 
 plot(density(betaQuants), 
      lwd = 2,
-     main = "", ylab = "", xlab = paste0(TeX(r'($\beta$)'), " (Elevation)"), yaxt = 'n',
+     main = "", ylab = "", xlab = TeX(r'($\beta$ (Elevation))'), yaxt = 'n',
      cex.lab = 1.5, cex.axis =  1.5)
 markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][7, ], c(.025, .5, .975))), 1, mean)
 abline(v = markers[2], col = 'red4', lwd = 3)
