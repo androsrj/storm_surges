@@ -97,7 +97,7 @@ abline(v = markers[c(1,3)], col = 'red4', lwd = 3, lty = 2)
 
 plot(density(gammaQuants[1, ]),
      lwd = 2,
-     main = "", ylab = "", xlab = paste0(TeX(r'($\beta$)'), " (Sea Level Rise)"), yaxt = 'n',
+     main = "", ylab = "", xlab = TeX(r'($\gamma_1$ (Sea Level Rise))'), yaxt = 'n',
      cex.lab = 1.5, cex.axis =  1.5)
 markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][2, ], c(.025, .5, .975))), 1, mean)
 abline(v = markers[2], col = 'red4', lwd = 3)
@@ -105,7 +105,7 @@ abline(v = markers[c(1,3)], col = 'red4', lwd = 3, lty = 2)
 
 plot(density(gammaQuants[2, ]),
      lwd = 2,
-     main = "", ylab = "", xlab = paste0(TeX(r'($\gamma_2$)'), " (Direction)"), yaxt = 'n',
+     main = "", ylab = "", xlab = TeX(r'($\gamma_2$ (Direction))'), yaxt = 'n',
      cex.lab = 1.5, cex.axis =  1.5)
 markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][3, ], c(.025, .5, .975))), 1, mean)
 abline(v = markers[2], col = 'red4', lwd = 3)
@@ -113,7 +113,7 @@ abline(v = markers[c(1,3)], col = 'red4', lwd = 3, lty = 2)
 
 plot(density(gammaQuants[3, ]),
      lwd = 2,
-     main = "", ylab = "", xlab =  paste0(TeX(r'($\gamma_3$)'), " (Min Velocity)"), yaxt = 'n',
+     main = "", ylab = "", xlab = TeX(r'($\gamma_3$ (Min Velocity))'), yaxt = 'n',
      cex.lab = 1.5, cex.axis =  1.5)
 markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][4, ], c(.025, .5, .975))), 1, mean)
 abline(v = markers[2], col = 'red4', lwd = 3)
@@ -121,7 +121,7 @@ abline(v = markers[c(1,3)], col = 'red4', lwd = 3, lty = 2)
 
 plot(density(gammaQuants[4, ]),
      lwd = 2,
-     main = "", ylab = "", xlab =  paste0(TeX(r'($\gamma_4$)'), " (Min Air Pressure)"), yaxt = 'n',
+     main = "", ylab = "", xlab =  TeX(r'($\gamma_4$ (Min Air Pressure))'), yaxt = 'n',
      cex.lab = 1.5, cex.axis =  1.5)
 markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][5, ], c(.025, .5, .975))), 1, mean)
 abline(v = markers[2], col = 'red4', lwd = 3)
@@ -129,7 +129,7 @@ abline(v = markers[c(1,3)], col = 'red4', lwd = 3, lty = 2)
 
 plot(density(gammaQuants[5, ]),
      lwd = 2,
-     main = "", ylab = "", xlab =  paste0(TeX(r'($\gamma_5$)'), " (Latitude)"), yaxt = 'n',
+     main = "", ylab = "", xlab =  TeX(r'($\gamma_5$ (Latitude))'), yaxt = 'n',
      cex.lab = 1.5, cex.axis =  1.5)
 markers <- apply(sapply(1:10, \(j) quantile(sk[[j]]$paramSamples[[3]][6, ], c(.025, .5, .975))), 1, mean)
 abline(v = markers[2], col = 'red4', lwd = 3)
