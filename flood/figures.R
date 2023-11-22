@@ -38,7 +38,7 @@ dev.off()
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estSketch), no.X=100, no.Y=100, extend=T)$xyz.est
 pdf("../figures/surfplots_flood.pdf")
 par(cex.lab = 2)
-par(mfrow = c(2, 2))
+par(mfrow = c(1, 3))
 image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "Sketching", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 
 # Surface plot for NNGP 
@@ -50,8 +50,8 @@ pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estBASS), no.X=100, no.Y=10
 image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "BASS", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 
 # Surface plot for BART
-pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estBART), no.X=100, no.Y=100, extend=T)$xyz.est
-image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "BART", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
+#pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estBART), no.X=100, no.Y=100, extend=T)$xyz.est
+#image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "BART", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
 dev.off()
 
 # Density plots for posteriors of each parameter
