@@ -36,7 +36,7 @@ dev.off()
 
 # Surface plot for estimated water level of storm 10 at testing data points (sketching) 
 pred.surf <-  mba.surf(cbind(coords[indexTest, 1:2], estSketch), no.X=100, no.Y=100, extend=T)$xyz.est
-pdf("../figures/surfplots_flood.pdf", width = 8, height = 5)
+pdf("../figures/surfplots_flood.pdf", width = 9, height = 4)
 par(cex.lab = 2)
 par(mfrow = c(1, 3))
 image(pred.surf, xaxs ="r", yaxs = "r", main="", xlab = "Sketching", zlim = lims, col = hcl.colors(12, "terrain", rev = TRUE))
