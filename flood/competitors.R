@@ -15,11 +15,11 @@ load("data/flood_data.RData")
 
 # Clusters and seed
 nCores <- 10
-mySeed <- 999
+mySeed <- 9999
 
 # Read in indices for test data
 n <- nrow(coords)
-indexTest <- readRDS("results/test_points.RDS")
+indexTest <- readRDS("results/alt_test_points.RDS")
 nTest <- length(indexTest)
 storms <- 1:5
 nSubj <- length(storms)
@@ -136,8 +136,8 @@ inputs <- inputs[c(storms, stormsTest), ]
 out <- out[c(storms, stormsTest), ]
 gc()
 
-set.seed(mySeed)
 strt <- Sys.time()
+set.seed(mySeed)
 model <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc = 3, n.cores = 1)
 predictions <- predict(model, inputs[stormsTest, ])[ , , indexTest]
 

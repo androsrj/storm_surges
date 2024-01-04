@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
 > source("../mcmc_functions/priors.R")
@@ -63,7 +65,7 @@ Try help(fields) to get started.
 > 
 > # Number of clusters for parallel implementation
 > #nCores <- detectCores() / 2
-> nCores <- 10
+> nCores <- 20
 > mySeed <- 1997
 > nKnots <- 500
 > test_subjects <- 1:5
@@ -105,8 +107,10 @@ Try help(fields) to get started.
 > splits <- c("subdomains", "stratified", "multiplets", "random")
 > propSD <- c(0.03, 0.1)
 > 
+> crps <- matrix(0, nrow = 4, ncol = 3)
+> 
 > # Get results for all 4 types of splits, both full GP and MPP
-> for (j in 1:4) {
+> for (j in 1:2) {
 +   
 +   # Create split indices for divide-and-conquer
 +   splitType <- splits[j]
@@ -122,10 +126,6 @@ Try help(fields) to get started.
 +   
 +   #### FULL GAUSSIAN PROCESS ####
 +   model <- "full_gp"
-+   dir.path <- paste0("results/d_and_c/full_gp/", splitType)
-+   if (!dir.exists(dir.path)) {
-+     dir.create(dir.path)
-+   }
 +   
 +   # Parallel
 +   cl <- makeCluster(nCores)
@@ -140,12 +140,15 @@ Try help(fields) to get started.
 +   DC_results_full_gp[[j]] <- wasserstein(results = obj,
 +                                          time = final.time)
 +   
++   crps[j, 1] <- mean(sapply(1:nTestSubj, function(i) {
++     truth <- test$Y[[i]]
++     preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
++     mean(energy_score(truth, preds))
++   }))
++ 
++ 
 +   #### SPARSE GAUSSIAN PROCESS ####
 +   model <- "sparse_gp"
-+   dir.path <- paste0("results/d_and_c/sparse_gp/", splitType)
-+   if (!dir.exists(dir.path)) {
-+     dir.create(dir.path)
-+   }
 +   
 +   # Parallel
 +   cl <- makeCluster(nCores)
@@ -160,12 +163,15 @@ Try help(fields) to get started.
 +   DC_results_sparse_gp[[j]] <- wasserstein(results = obj,
 +                                            time = final.time)
 +   
++   crps[j, 2] <- mean(sapply(1:nTestSubj, function(i) {
++     truth <- test$Y[[i]]
++     preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
++     mean(energy_score(truth, preds))
++   }))
++ 
++ 
 +   #### MODIFIED PREDICTIVE PROCESS ####
 +   model <- "mpp"
-+   dir.path <- paste0("results/d_and_c/mpp/", splitType)
-+   if (!dir.exists(dir.path)) {
-+     dir.create(dir.path)
-+   }
 +   
 +   # Parallel
 +   cl <- makeCluster(nCores)
@@ -179,13 +185,25 @@ Try help(fields) to get started.
 +   # Wasserstein averages of quantiles across subsets
 +   DC_results_mpp[[j]] <- wasserstein(results = obj,
 +                                      time = final.time)
++ 
++   crps[j, 3] <- mean(sapply(1:nTestSubj, function(i) {
++     truth <- test$Y[[i]]
++     preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
++     mean(energy_score(truth, preds))
++   }))
++ 
 + }
-There were 12 warnings (use warnings() to see them)
 > 
 > saveRDS(DC_results_full_gp, "results/d_and_c/full_gp_results.RDS")
 > saveRDS(DC_results_sparse_gp, "results/d_and_c/sparse_gp_results.RDS")
 > saveRDS(DC_results_mpp, "results/d_and_c/mpp_results.RDS")
 > 
+> crps
+          [,1]      [,2]      [,3]
+[1,] 0.8791774 0.8745928 0.8730701
+[2,] 0.8601684 0.8602640 0.8596162
+[3,] 0.0000000 0.0000000 0.0000000
+[4,] 0.0000000 0.0000000 0.0000000
 > 
 > #######################################################
 > ############### RUN MCMC FOR SKETCHING ################
@@ -213,6 +231,15 @@ There were 12 warnings (use warnings() to see them)
 +                                          time = final.time)
 > saveRDS(sketching_results_full_gp, "results/sketching/full_gp_results.RDS")
 > 
+> crps <- mean(sapply(1:nTestSubj, function(i) {
++   truth <- test$Y[[i]]
++   preds <- t(do.call(cbind, lapply(1:nCores, \(j) obj[[j]]$predSamples[[i]])))
++   mean(energy_score(truth, preds))
++ }))
+> crps
+[1] 0.8601019
+> 
+> 
 > #### SPARSE GAUSSIAN PROCESS ####
 > model <- "sparse_gp"
 > 
@@ -230,6 +257,15 @@ There were 12 warnings (use warnings() to see them)
 +                                            time = final.time)
 > saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp_results.RDS")
 > 
+> crps <- mean(sapply(1:nTestSubj, function(i) {
++   truth <- test$Y[[i]]
++   preds <- t(do.call(cbind, lapply(1:nCores, \(j) obj[[j]]$predSamples[[i]])))
++   mean(energy_score(truth, preds))
++ }))
+> crps
+[1] 0.8611133
+> 
+> 
 > #### MODIFIED PREDICTIVE PROCESS ####
 > model <- "mpp"
 > 
@@ -239,15 +275,3 @@ There were 12 warnings (use warnings() to see them)
 > strt<-Sys.time()
 > set.seed(mySeed)
 > obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "fields")) %dopar% sketching_parallel(i)  
-> final.time <- Sys.time() - strt 
-> stopCluster(cl)
-> 
-> # Wasserstein averages of quantiles across reps
-> sketching_results_mpp <- wasserstein(results = obj,
-+                                      time = final.time)
-> saveRDS(sketching_results_mpp, "results/sketching/mpp_results.RDS")
-> 
-> 
-> proc.time()
-      user     system    elapsed 
-    63.351     21.521 160524.660 

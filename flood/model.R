@@ -27,7 +27,7 @@ load("data/flood_data.RData")
 # Clusters and seed
 nCores <- 2
 totalCores <- 10
-mySeed <- 1997
+mySeed <- 856021
 test_subjects <- 6:10
 
 # Randomly sample indices for train and test data
@@ -66,10 +66,10 @@ DTest <- rdist(STest)
 
 
 # Sketching
-thetaVals <- seq(10^4, 10^5, length = totalCores)
+thetaVals <- seq(1000, 10000, length = totalCores)
 model <- "full_gp"
 mProp <- 0.01
-propSD <- c(0.03, 0.14)
+propSD <- c(0.02, 0.16)
 nSubj <- length(storms)
 nTestSubj <- length(test_subjects)
 
@@ -87,7 +87,7 @@ saveRDS(obj, "results/params.RDS")
 
 sigma2 <- lapply(1:totalCores, \(i) obj[[i]]$paramSamples$sigma2)
 
-
+rm(list = ls())
 if (file.exists(".RData")) {
   file.remove(".RData")
 }

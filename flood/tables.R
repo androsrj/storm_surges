@@ -2,7 +2,7 @@ source("../other_functions/helper_functions.R")
 sketching <- readRDS("results/flood_results_sketching.RDS")
 nngp <- readRDS("results/flood_results_nngp.RDS")
 bass <- readRDS("results/flood_results_bass.RDS")
-bart <- readRDS("results/flood_results_bart.RDS")
+#bart <- readRDS("results/flood_results_bart.RDS")
 indexTest <- readRDS("results/test_points.RDS")
 nTest <- length(indexTest)
 test_subjects <- 6:10
@@ -24,7 +24,7 @@ sketchParams <- data.frame(sigma2, tau2, beta)
 rownames(sketchParams) <- c("mean", "lower", "upper")
 
 # Calculate all predictive diagnostics
-length <- cvg <- score <- mspe <- pct <- matrix(0, nrow = length(test_subjects), ncol = 4)
+length <- cvg <- score <- mspe <- pct <- matrix(0, nrow = length(test_subjects), ncol = 3)
 for (i in 1:nTestSubj) {
   # True values
   trueTest <- out[test_subjects[i], indexTest]
@@ -40,30 +40,30 @@ for (i in 1:nTestSubj) {
   bassUpper <- bass$upper[i, ]
 
   # BART predictions for storm i
-  bartPreds <- bart$preds[((i - 1) * nTest + 1):(i * nTest)]
-  bartLower <- bart$lower[((i - 1) * nTest + 1):(i * nTest)]
-  bartUpper <- bart$upper[((i - 1) * nTest + 1):(i * nTest)]
+  #bartPreds <- bart$preds[((i - 1) * nTest + 1):(i * nTest)]
+  #bartLower <- bart$lower[((i - 1) * nTest + 1):(i * nTest)]
+  #bartUpper <- bart$upper[((i - 1) * nTest + 1):(i * nTest)]
   
   # Length
   lengthSketch <- mean(sketchUpper - sketchLower)
   lengthNNGP <- mean(nngp$upper - nngp$lower)
   lengthBass <- mean(bassUpper - bassLower)
-  lengthBart <- mean(bartUpper - bartLower)
-  length[i, ] <- c(lengthSketch, lengthNNGP, lengthBass, lengthBart)
+  #lengthBart <- mean(bartUpper - bartLower)
+  length[i, ] <- c(lengthSketch, lengthNNGP, lengthBass)
 
   # Coverage
   cvgSketch <- mean(sketchUpper > trueTest & sketchLower < trueTest)
   cvgNNGP <- mean(nngp$upper > trueTest & nngp$lower < trueTest)
   cvgBass <- mean(bassUpper > trueTest & bassLower < trueTest)
-  cvgBart <- mean(bartUpper > trueTest & bartLower < trueTest)
-  cvg[i, ] <- c(cvgSketch, cvgNNGP, cvgBass, cvgBart)
+  #cvgBart <- mean(bartUpper > trueTest & bartLower < trueTest)
+  cvg[i, ] <- c(cvgSketch, cvgNNGP, cvgBass)
 
   # MSPE
   mspeSketch <- mean((sketchPreds - trueTest)^2)
   mspeNNGP <- mean((nngp$preds - trueTest)^2)
   mspeBass <- mean((bassPreds - trueTest)^2)
-  mspeBart <- mean((bartPreds - trueTest)^2)
-  mspe[i, ] <- c(mspeSketch, mspeNNGP, mspeBass, mspeBart)
+  #mspeBart <- mean((bartPreds - trueTest)^2)
+  mspe[i, ] <- c(mspeSketch, mspeNNGP, mspeBass)
 
   # Interval score
   a <- 0.05
@@ -82,12 +82,12 @@ for (i in 1:nTestSubj) {
 		   (trueTest < bassLower) + 
 		   2/a * (trueTest - bassUpper) *
 		   (trueTest > bassUpper) )
-  scoreBart <- mean( (bartUpper - bartLower) +
-		   2/a * (bartLower - trueTest) *
-		   (trueTest < bartLower) + 
-		   2/a * (trueTest - bartUpper) * 
-		   (trueTest > bartUpper) )
-  score[i, ] <- c(scoreSketch, scoreNNGP, scoreBass, scoreBart)
+  #scoreBart <- mean( (bartUpper - bartLower) +
+  #		   2/a * (bartLower - trueTest) *
+  #		   (trueTest < bartLower) + 
+  #		   2/a * (trueTest - bartUpper) * 
+  #		   (trueTest > bartUpper) )
+  score[i, ] <- c(scoreSketch, scoreNNGP, scoreBass)
 
   # Over/under 4 feet
   trueFeet <- trueTest * 3.28084
@@ -105,17 +105,17 @@ for (i in 1:nTestSubj) {
   bassOver <- bassFeet >= 4.0
   bassPct <- mean(trueOver == bassOver)
   
-  bartFeet <- bartPreds * 3.28084
-  bartOver <- bartFeet >= 4.0
-  bartPct <- mean(trueOver == bartOver)
+  #bartFeet <- bartPreds * 3.28084
+  #bartOver <- bartFeet >= 4.0
+  #bartPct <- mean(trueOver == bartOver)
 
-  pct[i, ] <- c(sketchPct, nngpPct, bassPct, bartPct)
+  pct[i, ] <- c(sketchPct, nngpPct, bassPct)
 }
 
 length <- apply(length, 2, mean)
 cvg <- apply(cvg, 2, mean)
 mspe <- apply(mspe, 2, mean)
-crps <- c(sketching$crps, nngp$crps, bass$crps, bart$crps)
+crps <- c(sketching$crps, nngp$crps, bass$crps)
 score <- apply(score, 2, mean)
 pct <- 1 - apply(pct, 2, mean)
 
@@ -123,15 +123,18 @@ pct <- 1 - apply(pct, 2, mean)
 
 sketchParams
 nngp$params
-
 crps
+sketching$crps
+nngp$crps
+bass$crps
+
 # Predictive diagnostics 
 preds_df <- data.frame(mspe = mspe,
-		       #crps = crps,
+		       crps = crps,
 		       cvg = cvg, 
 		       score = score, 
 		       pct = pct)
-rownames(preds_df) <- c("Sketching", "NNGP", "BASS", "BART")
+rownames(preds_df) <- c("Sketching", "NNGP", "BASS")
 preds_df
 
 # Also make sure that acceptance rates are satisfactory

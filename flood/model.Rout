@@ -22,9 +22,9 @@ Type 'q()' to quit R.
 > # Clear environment and free unused memory
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger  (Mb) max used  (Mb)
-Ncells 275535 14.8     787242  42.1   350000  18.7
-Vcells 462578  3.6   23980400 183.0 26171492 199.7
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 275579 14.8     666002 35.6   456470 24.4
+Vcells 462977  3.6    8388608 64.0  1820341 13.9
 > 
 > # SOURCES
 > source("../mcmc_functions/mcmc.R") # Metropolis-Gibbs Sampler
@@ -74,7 +74,7 @@ Try help(fields) to get started.
 > # Clusters and seed
 > nCores <- 2
 > totalCores <- 10
-> mySeed <- 1997
+> mySeed <- 856021
 > test_subjects <- 6:10
 > 
 > # Randomly sample indices for train and test data
@@ -113,10 +113,10 @@ Try help(fields) to get started.
 > 
 > 
 > # Sketching
-> thetaVals <- seq(10^4, 10^5, length = totalCores)
+> thetaVals <- seq(1000, 10000, length = totalCores)
 > model <- "full_gp"
 > mProp <- 0.01
-> propSD <- c(0.03, 0.14)
+> propSD <- c(0.02, 0.16)
 > nSubj <- length(storms)
 > nTestSubj <- length(test_subjects)
 > 
@@ -134,16 +134,16 @@ Try help(fields) to get started.
 > 
 > sigma2 <- lapply(1:totalCores, \(i) obj[[i]]$paramSamples$sigma2)
 > 
-> 
+> rm(list = ls())
 > if (file.exists(".RData")) {
 +   file.remove(".RData")
 + }
 [1] TRUE
 > gc()
-             used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells    1976110   105.6    3222611   172.2    3222611   172.2
-Vcells 2727440655 20808.8 3856603491 29423.6 2728246953 20814.9
+          used  (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells 1973037 105.4    3776320   201.7    2835508   151.5
+Vcells 3341313  25.5 2571015660 19615.3 2728247063 20814.9
 > 
 > proc.time()
      user    system   elapsed 
-   89.875    23.256 52995.538 
+   92.378    24.724 81055.833 

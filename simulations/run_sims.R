@@ -21,7 +21,7 @@ library(pracma) # For sparse matrix calculation
 
 # Number of clusters for parallel implementation
 #nCores <- detectCores() / 2
-nCores <- 10
+nCores <- 20
 mySeed <- 1997
 nKnots <- 500
 test_subjects <- 1:5
@@ -63,8 +63,10 @@ indices[[4]] <- list2Vec(split(sample(1:n, n, replace = FALSE), as.factor(1:nCor
 splits <- c("subdomains", "stratified", "multiplets", "random")
 propSD <- c(0.03, 0.1)
 
+crps <- matrix(0, nrow = 4, ncol = 3)
+
 # Get results for all 4 types of splits, both full GP and MPP
-for (j in 1:4) {
+for (j in 1:2) {
   
   # Create split indices for divide-and-conquer
   splitType <- splits[j]
@@ -80,10 +82,6 @@ for (j in 1:4) {
   
   #### FULL GAUSSIAN PROCESS ####
   model <- "full_gp"
-  dir.path <- paste0("results/d_and_c/full_gp/", splitType)
-  if (!dir.exists(dir.path)) {
-    dir.create(dir.path)
-  }
   
   # Parallel
   cl <- makeCluster(nCores)
@@ -98,12 +96,15 @@ for (j in 1:4) {
   DC_results_full_gp[[j]] <- wasserstein(results = obj,
                                          time = final.time)
   
+  crps[j, 1] <- mean(sapply(1:nTestSubj, function(i) {
+    truth <- test$Y[[i]]
+    preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
+    mean(energy_score(truth, preds))
+  }))
+
+
   #### SPARSE GAUSSIAN PROCESS ####
   model <- "sparse_gp"
-  dir.path <- paste0("results/d_and_c/sparse_gp/", splitType)
-  if (!dir.exists(dir.path)) {
-    dir.create(dir.path)
-  }
   
   # Parallel
   cl <- makeCluster(nCores)
@@ -118,12 +119,15 @@ for (j in 1:4) {
   DC_results_sparse_gp[[j]] <- wasserstein(results = obj,
                                            time = final.time)
   
+  crps[j, 2] <- mean(sapply(1:nTestSubj, function(i) {
+    truth <- test$Y[[i]]
+    preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
+    mean(energy_score(truth, preds))
+  }))
+
+
   #### MODIFIED PREDICTIVE PROCESS ####
   model <- "mpp"
-  dir.path <- paste0("results/d_and_c/mpp/", splitType)
-  if (!dir.exists(dir.path)) {
-    dir.create(dir.path)
-  }
   
   # Parallel
   cl <- makeCluster(nCores)
@@ -137,12 +141,20 @@ for (j in 1:4) {
   # Wasserstein averages of quantiles across subsets
   DC_results_mpp[[j]] <- wasserstein(results = obj,
                                      time = final.time)
+
+  crps[j, 3] <- mean(sapply(1:nTestSubj, function(i) {
+    truth <- test$Y[[i]]
+    preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
+    mean(energy_score(truth, preds))
+  }))
+
 }
 
 saveRDS(DC_results_full_gp, "results/d_and_c/full_gp_results.RDS")
 saveRDS(DC_results_sparse_gp, "results/d_and_c/sparse_gp_results.RDS")
 saveRDS(DC_results_mpp, "results/d_and_c/mpp_results.RDS")
 
+crps
 
 #######################################################
 ############### RUN MCMC FOR SKETCHING ################
@@ -170,6 +182,14 @@ sketching_results_full_gp <- wasserstein(results = obj,
                                          time = final.time)
 saveRDS(sketching_results_full_gp, "results/sketching/full_gp_results.RDS")
 
+crps <- mean(sapply(1:nTestSubj, function(i) {
+  truth <- test$Y[[i]]
+  preds <- t(do.call(cbind, lapply(1:nCores, \(j) obj[[j]]$predSamples[[i]])))
+  mean(energy_score(truth, preds))
+}))
+crps
+
+
 #### SPARSE GAUSSIAN PROCESS ####
 model <- "sparse_gp"
 
@@ -186,6 +206,14 @@ stopCluster(cl)
 sketching_results_sparse_gp <- wasserstein(results = obj,
                                            time = final.time)
 saveRDS(sketching_results_sparse_gp, "results/sketching/sparse_gp_results.RDS")
+
+crps <- mean(sapply(1:nTestSubj, function(i) {
+  truth <- test$Y[[i]]
+  preds <- t(do.call(cbind, lapply(1:nCores, \(j) obj[[j]]$predSamples[[i]])))
+  mean(energy_score(truth, preds))
+}))
+crps
+
 
 #### MODIFIED PREDICTIVE PROCESS ####
 model <- "mpp"
@@ -204,3 +232,12 @@ sketching_results_mpp <- wasserstein(results = obj,
                                      time = final.time)
 saveRDS(sketching_results_mpp, "results/sketching/mpp_results.RDS")
 
+crps <- mean(sapply(1:nTestSubj, function(i) {
+  truth <- test$Y[[i]]
+  preds <- t(do.call(cbind, lapply(1:nCores, \(j) obj[[j]]$predSamples[[i]])))
+  mean(energy_score(truth, preds))
+}))
+crps
+
+
+save(obj, file = "obj.RData")

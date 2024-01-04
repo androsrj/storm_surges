@@ -21,9 +21,9 @@ Type 'q()' to quit R.
 
 > rm(list = ls())
 > gc()
-         used (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells 275886 14.8     788245    42.1     350000    18.7
-Vcells 463094  3.6 2375987371 18127.4 2725281941 20792.3
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 275579 14.8     666002 35.6   456470 24.4
+Vcells 462977  3.6    8388608 64.0  1820341 13.9
 > 
 > # Libraries
 > library(parallel) # For parallel computation
@@ -44,11 +44,11 @@ Loading required package: RANN
 > 
 > # Clusters and seed
 > nCores <- 10
-> mySeed <- 999
+> mySeed <- 9999
 > 
 > # Read in indices for test data
 > n <- nrow(coords)
-> indexTest <- readRDS("results/test_points.RDS")
+> indexTest <- readRDS("results/alt_test_points.RDS")
 > nTest <- length(indexTest)
 > storms <- 1:5
 > nSubj <- length(storms)
@@ -128,8 +128,8 @@ Loading required package: RANN
 > stopCluster(cl)
 > gc()
              used    (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells     487072    26.1     997511    53.3     788245    42.1
-Vcells 1447386638 11042.7 2375987371 18127.4 2725281941 20792.3
+Ncells     486848    26.1     905061    48.4     666002    35.6
+Vcells 1447386471 11042.7 1906611509 14546.3 1447433998 11043.1
 > 
 > # Extract parameter estimates and credible intervals
 > means <- apply(sapply(1:nSubj, function(i) apply(nngp_obj[[i]]$p.theta.samples, 2, mean)), 1, mean)
@@ -168,45 +168,45 @@ Vcells 1447386638 11042.7 2375987371 18127.4 2725281941 20792.3
 > out <- out[c(storms, stormsTest), ]
 > gc()
              used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells     502378   26.9     997511    53.3     997511    53.3
-Vcells 1249027602 9529.4 2375987371 18127.4 2725281941 20792.3
+Ncells     502178   26.9     905061    48.4     905061    48.4
+Vcells 1249027472 9529.4 1906611509 14546.3 1471599863 11227.5
 > 
-> set.seed(mySeed)
 > strt <- Sys.time()
+> set.seed(mySeed)
 > model <- bassPCA(inputs[-stormsTest, ], out[-stormsTest, ], n.pc = 3, n.cores = 1)
-MCMC Start #-- Nov 03 10:36:51 AM --# nbasis: 0 
-MCMC iteration 1000 #-- Nov 03 10:36:52 AM --# nbasis: 2 
-MCMC iteration 2000 #-- Nov 03 10:36:52 AM --# nbasis: 1 
-MCMC iteration 3000 #-- Nov 03 10:36:53 AM --# nbasis: 0 
-MCMC iteration 4000 #-- Nov 03 10:36:53 AM --# nbasis: 1 
-MCMC iteration 5000 #-- Nov 03 10:36:54 AM --# nbasis: 1 
-MCMC iteration 6000 #-- Nov 03 10:36:54 AM --# nbasis: 1 
-MCMC iteration 7000 #-- Nov 03 10:36:55 AM --# nbasis: 1 
-MCMC iteration 8000 #-- Nov 03 10:36:55 AM --# nbasis: 2 
-MCMC iteration 9000 #-- Nov 03 10:36:56 AM --# nbasis: 0 
-MCMC iteration 10000 #-- Nov 03 10:36:57 AM --# nbasis: 0 
-MCMC Start #-- Nov 03 10:36:57 AM --# nbasis: 0 
-MCMC iteration 1000 #-- Nov 03 10:36:57 AM --# nbasis: 2 
-MCMC iteration 2000 #-- Nov 03 10:36:58 AM --# nbasis: 1 
-MCMC iteration 3000 #-- Nov 03 10:36:58 AM --# nbasis: 1 
-MCMC iteration 4000 #-- Nov 03 10:36:59 AM --# nbasis: 1 
-MCMC iteration 5000 #-- Nov 03 10:36:59 AM --# nbasis: 2 
-MCMC iteration 6000 #-- Nov 03 10:37:00 AM --# nbasis: 1 
-MCMC iteration 7000 #-- Nov 03 10:37:00 AM --# nbasis: 1 
-MCMC iteration 8000 #-- Nov 03 10:37:01 AM --# nbasis: 0 
-MCMC iteration 9000 #-- Nov 03 10:37:01 AM --# nbasis: 1 
-MCMC iteration 10000 #-- Nov 03 10:37:02 AM --# nbasis: 1 
-MCMC Start #-- Nov 03 10:37:02 AM --# nbasis: 0 
-MCMC iteration 1000 #-- Nov 03 10:37:02 AM --# nbasis: 0 
-MCMC iteration 2000 #-- Nov 03 10:37:03 AM --# nbasis: 2 
-MCMC iteration 3000 #-- Nov 03 10:37:03 AM --# nbasis: 1 
-MCMC iteration 4000 #-- Nov 03 10:37:04 AM --# nbasis: 1 
-MCMC iteration 5000 #-- Nov 03 10:37:04 AM --# nbasis: 1 
-MCMC iteration 6000 #-- Nov 03 10:37:05 AM --# nbasis: 2 
-MCMC iteration 7000 #-- Nov 03 10:37:05 AM --# nbasis: 1 
-MCMC iteration 8000 #-- Nov 03 10:37:06 AM --# nbasis: 2 
-MCMC iteration 9000 #-- Nov 03 10:37:06 AM --# nbasis: 1 
-MCMC iteration 10000 #-- Nov 03 10:37:07 AM --# nbasis: 2 
+MCMC Start #-- Dec 25 09:46:57 PM --# nbasis: 0 
+MCMC iteration 1000 #-- Dec 25 09:46:58 PM --# nbasis: 1 
+MCMC iteration 2000 #-- Dec 25 09:46:58 PM --# nbasis: 2 
+MCMC iteration 3000 #-- Dec 25 09:46:59 PM --# nbasis: 1 
+MCMC iteration 4000 #-- Dec 25 09:46:59 PM --# nbasis: 1 
+MCMC iteration 5000 #-- Dec 25 09:47:00 PM --# nbasis: 1 
+MCMC iteration 6000 #-- Dec 25 09:47:00 PM --# nbasis: 1 
+MCMC iteration 7000 #-- Dec 25 09:47:01 PM --# nbasis: 1 
+MCMC iteration 8000 #-- Dec 25 09:47:01 PM --# nbasis: 1 
+MCMC iteration 9000 #-- Dec 25 09:47:02 PM --# nbasis: 1 
+MCMC iteration 10000 #-- Dec 25 09:47:02 PM --# nbasis: 1 
+MCMC Start #-- Dec 25 09:47:02 PM --# nbasis: 0 
+MCMC iteration 1000 #-- Dec 25 09:47:03 PM --# nbasis: 2 
+MCMC iteration 2000 #-- Dec 25 09:47:04 PM --# nbasis: 0 
+MCMC iteration 3000 #-- Dec 25 09:47:04 PM --# nbasis: 1 
+MCMC iteration 4000 #-- Dec 25 09:47:05 PM --# nbasis: 1 
+MCMC iteration 5000 #-- Dec 25 09:47:05 PM --# nbasis: 0 
+MCMC iteration 6000 #-- Dec 25 09:47:06 PM --# nbasis: 1 
+MCMC iteration 7000 #-- Dec 25 09:47:06 PM --# nbasis: 2 
+MCMC iteration 8000 #-- Dec 25 09:47:07 PM --# nbasis: 2 
+MCMC iteration 9000 #-- Dec 25 09:47:07 PM --# nbasis: 0 
+MCMC iteration 10000 #-- Dec 25 09:47:08 PM --# nbasis: 1 
+MCMC Start #-- Dec 25 09:47:08 PM --# nbasis: 0 
+MCMC iteration 1000 #-- Dec 25 09:47:08 PM --# nbasis: 2 
+MCMC iteration 2000 #-- Dec 25 09:47:09 PM --# nbasis: 1 
+MCMC iteration 3000 #-- Dec 25 09:47:09 PM --# nbasis: 1 
+MCMC iteration 4000 #-- Dec 25 09:47:10 PM --# nbasis: 1 
+MCMC iteration 5000 #-- Dec 25 09:47:10 PM --# nbasis: 1 
+MCMC iteration 6000 #-- Dec 25 09:47:11 PM --# nbasis: 1 
+MCMC iteration 7000 #-- Dec 25 09:47:12 PM --# nbasis: 1 
+MCMC iteration 8000 #-- Dec 25 09:47:12 PM --# nbasis: 0 
+MCMC iteration 9000 #-- Dec 25 09:47:13 PM --# nbasis: 0 
+MCMC iteration 10000 #-- Dec 25 09:47:13 PM --# nbasis: 1 
 > predictions <- predict(model, inputs[stormsTest, ])[ , , indexTest]
 > 
 > bassPreds <- apply(predictions, 2:3, mean)
@@ -229,12 +229,14 @@ MCMC iteration 10000 #-- Nov 03 10:37:07 AM --# nbasis: 2
 > rm(list=ls())
 > gc()
          used (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells 556133 29.8     997511    53.3     997511    53.3
-Vcells 984289  7.6 1900789897 14501.9 2725281941 20792.3
+Ncells 555933 29.7    1126073    60.2    1126073    60.2
+Vcells 984167  7.6 1525289208 11637.1 1770492621 13507.8
 > if (file.exists(".RData")) {
 +   remove(".RData")
 + }
+Warning message:
+In remove(".RData") : object '.RData' not found
 > 
 > proc.time()
     user   system  elapsed 
- 181.641   26.837 1485.115 
+  50.233   13.070 1335.716 

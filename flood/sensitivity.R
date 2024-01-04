@@ -82,8 +82,8 @@ final.time <- Sys.time() - strt
 stopCluster(cl)
 
 flood_results_sketching <- wasserstein(results = obj, time = final.time)
-saveRDS(flood_results_sketching, "results/flood_results_sens.RDS")
-saveRDS(obj, "results/params_sens.RDS")
+saveRDS(flood_results_sketching, "results/sensitivity/flood_results_sens.RDS")
+saveRDS(obj, "results/sensitivity/params_sens.RDS")
 
 if (file.exists(".RData")) {
   file.remove(".RData")
