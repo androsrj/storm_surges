@@ -19,7 +19,7 @@ mySeed <- 9999
 
 # Read in indices for test data
 n <- nrow(coords)
-indexTest <- readRDS("results/alt_test_points.RDS")
+indexTest <- readRDS("results/test_points.RDS")
 nTest <- length(indexTest)
 storms <- 1:5
 nSubj <- length(storms)

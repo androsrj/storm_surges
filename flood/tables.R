@@ -112,21 +112,23 @@ for (i in 1:nTestSubj) {
   pct[i, ] <- c(sketchPct, nngpPct, bassPct)
 }
 
+sketchCRPS <- mean(sapply(1:nTestSubj, function(i) {
+  truth <- out[test_subjects[i], indexTest]
+  preds <- sapply(1:nTestSubj, \(i) sketching$predictions[[i]][2, ])
+  mean(energy_score(truth, preds))
+}))
+
 length <- apply(length, 2, mean)
 cvg <- apply(cvg, 2, mean)
 mspe <- apply(mspe, 2, mean)
-crps <- c(sketching$crps, nngp$crps, bass$crps)
+crps <- c(sketchCRPS, nngp$crps, bass$crps)
 score <- apply(score, 2, mean)
 pct <- 1 - apply(pct, 2, mean)
 
 # Parameter estimates
-
 sketchParams
 nngp$params
-crps
-sketching$crps
-nngp$crps
-bass$crps
+
 
 # Predictive diagnostics 
 preds_df <- data.frame(mspe = mspe,

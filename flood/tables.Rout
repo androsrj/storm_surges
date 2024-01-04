@@ -133,15 +133,20 @@ Type 'q()' to quit R.
 +   pct[i, ] <- c(sketchPct, nngpPct, bassPct)
 + }
 > 
+> sketchCRPS <- mean(sapply(1:nTestSubj, function(i) {
++   truth <- out[test_subjects[i], indexTest]
++   preds <- sapply(1:nTestSubj, \(i) sketching$predictions[[i]][2, ])
++   mean(energy_score(truth, preds))
++ }))
+> 
 > length <- apply(length, 2, mean)
 > cvg <- apply(cvg, 2, mean)
 > mspe <- apply(mspe, 2, mean)
-> crps <- c(sketching$crps, nngp$crps, bass$crps)
+> crps <- c(sketchCRPS, nngp$crps, bass$crps)
 > score <- apply(score, 2, mean)
 > pct <- 1 - apply(pct, 2, mean)
 > 
 > # Parameter estimates
-> 
 > sketchParams
          sigma2       tau2       beta
 mean  0.6850227 0.08406825 -0.7193306
@@ -149,17 +154,10 @@ lower 0.6636887 0.05654706 -0.7207855
 upper 0.7137268 0.10444747 -0.7178103
 > nngp$params
        sigma.sq     tau.sq       phi       beta
-mean  0.5764774 0.02795474  752.0608 -0.3235838
-lower 0.4663376 0.01017645  339.3973 -0.4019445
-upper 0.6921039 0.09930038 3630.3445 -0.2164336
-> crps
-[1] 0.8982107 0.7429007
-> sketching$crps
-NULL
-> nngp$crps
-[1] 0.8982107
-> bass$crps
-[1] 0.7429007
+mean  0.5991284 0.03169008  596.6854 -0.2716528
+lower 0.4607983 0.01133672  299.7029 -0.3647274
+upper 0.6855865 0.08479273 2688.3223 -0.1739119
+> 
 > 
 > # Predictive diagnostics 
 > preds_df <- data.frame(mspe = mspe,
@@ -167,6 +165,29 @@ NULL
 + 		       cvg = cvg, 
 + 		       score = score, 
 + 		       pct = pct)
-Error in data.frame(mspe = mspe, crps = crps, cvg = cvg, score = score,  : 
-  arguments imply differing number of rows: 3, 2
-Execution halted
+> rownames(preds_df) <- c("Sketching", "NNGP", "BASS")
+> preds_df
+               mspe      crps       cvg    score        pct
+Sketching 1.0806073 1.1170743 0.9004024  5.19281 0.07625755
+NNGP      0.8489636 0.8976753 0.1792757 20.92642 0.08933602
+BASS      1.4932499 0.7429007 0.5927565 11.60040 0.10442656
+> 
+> # Also make sure that acceptance rates are satisfactory
+> sketching$acc
+ sigma2    tau2 
+0.21592 0.32068 
+> 
+> rm(list=ls())
+> gc()
+         used (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells 357965 19.2     666002   35.6    666002   35.6
+Vcells 648820  5.0  231957919 1769.7 223407851 1704.5
+> if (file.exists(".RData")) {
++   remove(".RData")
++ }
+Warning message:
+In remove(".RData") : object '.RData' not found
+> 
+> proc.time()
+   user  system elapsed 
+  8.293   0.909   9.265 
