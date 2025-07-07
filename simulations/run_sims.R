@@ -91,16 +91,22 @@ for (j in 1:2) {
   obj <- foreach(i = 1:nCores, .packages = "mvtnorm") %dopar% DC_parallel(i)
   final.time <- Sys.time() - strt 
   stopCluster(cl)
-  
+
   # Wasserstein averages of quantiles across subsets
   DC_results_full_gp[[j]] <- wasserstein(results = obj,
                                          time = final.time)
-  
+  #cat("checkpoint 2")
+  #a <- test$Y[[1]]
+  #cat("checkpoint 3")
+  #b <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[1]])))
+  #cat("checkpoint 4")
+  #mean(energy_score(a, b))
   crps[j, 1] <- mean(sapply(1:nTestSubj, function(i) {
     truth <- test$Y[[i]]
     preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
     mean(energy_score(truth, preds))
   }))
+  cat("Finished Full GP \n")
 
 
   #### SPARSE GAUSSIAN PROCESS ####
@@ -124,7 +130,7 @@ for (j in 1:2) {
     preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
     mean(energy_score(truth, preds))
   }))
-
+  cat("Finished Sparse GP \n")
 
   #### MODIFIED PREDICTIVE PROCESS ####
   model <- "mpp"
@@ -147,7 +153,7 @@ for (j in 1:2) {
     preds <- t(do.call(cbind, lapply(1:nCores, \(k) obj[[k]]$predSamples[[i]])))
     mean(energy_score(truth, preds))
   }))
-
+  cat("Finished MPP \n")
 }
 
 saveRDS(DC_results_full_gp, "results/d_and_c/full_gp_results.RDS")
@@ -188,7 +194,7 @@ crps <- mean(sapply(1:nTestSubj, function(i) {
   mean(energy_score(truth, preds))
 }))
 crps
-
+cat("Finished Full GP \n")
 
 #### SPARSE GAUSSIAN PROCESS ####
 model <- "sparse_gp"
@@ -213,7 +219,7 @@ crps <- mean(sapply(1:nTestSubj, function(i) {
   mean(energy_score(truth, preds))
 }))
 crps
-
+cat("Finished Sparse GP \n")
 
 #### MODIFIED PREDICTIVE PROCESS ####
 model <- "mpp"
@@ -238,6 +244,6 @@ crps <- mean(sapply(1:nTestSubj, function(i) {
   mean(energy_score(truth, preds))
 }))
 crps
-
+cat("Finished MPP \n")
 
 save(obj, file = "obj.RData")

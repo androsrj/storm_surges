@@ -136,7 +136,7 @@ beta2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[5]),
                        sketch_sparse_gp$upper[5]))
 
 #######################################################################
-
+cat("A")
 MSPE <- cvg_ind <- score <- numeric(15)
 
 for (i in 1:nTestSubj) {
@@ -158,6 +158,9 @@ for (i in 1:nTestSubj) {
                       sketch_mpp$predictions[[i]][2, ],
                       t(sapply(DC_sparse_gp, \(x) x$predictions[[i]][2, ])),
                       sketch_sparse_gp$predictions[[i]][2, ])
+  cat(dim(pointPreds))
+  cat("    ")
+  cat(dim(test$Y[[i]]))
 
   MSPE <- MSPE + apply(pointPreds, 1, \(x) mean((x - test$Y[[i]])^2))
   cvg_ind <- cvg_ind + sapply(1:15, \(j) lowerPreds[j, ] <= test$Y[[i]] & upperPreds[j, ] >= test$Y[[i]])
