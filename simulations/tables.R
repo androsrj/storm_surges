@@ -1,7 +1,7 @@
 # Tables for paper
-DC_full_gp <- readRDS("results/d_and_c/full_gp_results.RDS")
-DC_mpp <- readRDS("results/d_and_c/mpp_results.RDS")
-DC_sparse_gp <- readRDS("results/d_and_c/sparse_gp_results.RDS")
+DC_full_gp <- readRDS("results/d_and_c/full_gp_results.RDS")[1:2]
+DC_mpp <- readRDS("results/d_and_c/mpp_results.RDS")[1:2]
+DC_sparse_gp <- readRDS("results/d_and_c/sparse_gp_results.RDS")[1:2]
 sketch_full_gp <- readRDS("results/sketching/full_gp_results.RDS")
 sketch_mpp <- readRDS("results/sketching/mpp_results.RDS")
 sketch_sparse_gp <- readRDS("results/sketching/sparse_gp_results.RDS")
@@ -17,8 +17,8 @@ sketch_sparse_gp$acc
 
 test_subjects <- 6:10
 nTestSubj <- length(test_subjects)
-model <- rep(c("Full_GP", "MPP", "Sparse_GP"), each = 5)
-splitType <- rep(c("Subdomains", "Stratified", "Multiplets", "Random", "Sketching"), 3)
+model <- rep(c("Full_GP", "MPP", "Sparse_GP"), each = 3)
+splitType <- rep(c("Subdomains", "Stratified", "Sketching"), 3)
 
 #######################################################################
 
@@ -136,36 +136,41 @@ beta2Upper <- unname(c(sapply(DC_full_gp, \(x) x$upper[5]),
                        sketch_sparse_gp$upper[5]))
 
 #######################################################################
-cat("A")
-MSPE <- cvg_ind <- score <- numeric(15)
+MSPE <- cvg_ind <- score <- numeric(9)
 
 for (i in 1:nTestSubj) {
-  lowerPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[i]][1, ])),
-		      sketch_full_gp$predictions[[i]][1, ],
-		      t(sapply(DC_mpp, \(x) x$predictions[[i]][1, ])),
+  lowerPreds <- rbind(DC_full_gp[[1]]$predictions[[i]][1, ],
+                      DC_full_gp[[2]]$predictions[[i]][1, ],
+                      sketch_full_gp$predictions[[i]][1, ],
+                      DC_mpp[[1]]$predictions[[i]][1, ],
+                      DC_mpp[[2]]$predictions[[i]][1, ],
                       sketch_mpp$predictions[[i]][1, ],
-		      t(sapply(DC_sparse_gp, \(x) x$predictions[[i]][1, ])),
+                      DC_sparse_gp[[1]]$predictions[[i]][1, ],
+                      DC_sparse_gp[[2]]$predictions[[i]][1, ],
                       sketch_sparse_gp$predictions[[i]][1, ])
-  upperPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[i]][3, ])),
+  upperPreds <- rbind(DC_full_gp[[1]]$predictions[[i]][3, ],
+                      DC_full_gp[[2]]$predictions[[i]][3, ],
                       sketch_full_gp$predictions[[i]][3, ],
-                      t(sapply(DC_mpp, \(x) x$predictions[[i]][3, ])),
+                      DC_mpp[[1]]$predictions[[i]][3, ],
+                      DC_mpp[[2]]$predictions[[i]][3, ],
                       sketch_mpp$predictions[[i]][3, ],
-                      t(sapply(DC_sparse_gp, \(x) x$predictions[[i]][3, ])),
+                      DC_sparse_gp[[1]]$predictions[[i]][3, ],
+                      DC_sparse_gp[[2]]$predictions[[i]][3, ],
                       sketch_sparse_gp$predictions[[i]][3, ])
-  pointPreds <- rbind(t(sapply(DC_full_gp, \(x) x$predictions[[i]][2, ])),
+  pointPreds <- rbind(DC_full_gp[[1]]$predictions[[i]][2, ],
+                      DC_full_gp[[2]]$predictions[[i]][2, ],
                       sketch_full_gp$predictions[[i]][2, ],
-                      t(sapply(DC_mpp, \(x) x$predictions[[i]][2, ])),
+                      DC_mpp[[1]]$predictions[[i]][2, ],
+                      DC_mpp[[2]]$predictions[[i]][2, ],
                       sketch_mpp$predictions[[i]][2, ],
-                      t(sapply(DC_sparse_gp, \(x) x$predictions[[i]][2, ])),
+                      DC_sparse_gp[[1]]$predictions[[i]][2, ],
+                      DC_sparse_gp[[2]]$predictions[[i]][2, ],
                       sketch_sparse_gp$predictions[[i]][2, ])
-  cat(dim(pointPreds))
-  cat("    ")
-  cat(dim(test$Y[[i]]))
-
+  
   MSPE <- MSPE + apply(pointPreds, 1, \(x) mean((x - test$Y[[i]])^2))
-  cvg_ind <- cvg_ind + sapply(1:15, \(j) lowerPreds[j, ] <= test$Y[[i]] & upperPreds[j, ] >= test$Y[[i]])
+  cvg_ind <- cvg_ind + sapply(1:9, \(j) lowerPreds[j, ] <= test$Y[[i]] & upperPreds[j, ] >= test$Y[[i]])
   a <- .05
-  score <- score + sapply(1:15, \(j) mean( (upperPreds[j,] - lowerPreds[j,]) +
+  score <- score + sapply(1:9, \(j) mean( (upperPreds[j,] - lowerPreds[j,]) +
                                    2/a * (lowerPreds[j,] - test$Y[[i]]) *
                                    (test$Y[[i]] < lowerPreds[j,]) + 2/a *
                                    (test$Y[[i]] - upperPreds[j,]) *
@@ -181,7 +186,7 @@ df <- data.frame(model, splitType,
                  tau2Mean, tau2Lower, tau2Upper,
                  beta1Mean, beta1Lower, beta1Upper,
                  beta2Mean, beta2Lower, beta2Upper,
-		 gammaMean, gammaLower, gammaUpper,
+                 gammaMean, gammaLower, gammaUpper,
                  MSPE, coverage, score)
 
 df
