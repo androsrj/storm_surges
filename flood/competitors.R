@@ -5,7 +5,7 @@ gc()
 library(parallel) # For parallel computation
 library(doParallel) # For parallel computation
 library(foreach) # For parallel computation
-library(BayesTree) # For BART
+#library(BayesTree) # For BART
 library(spNNGP) # For NNGP
 library(BASS) # For BASS
 source("../other_functions/helper_functions.R")
@@ -26,7 +26,7 @@ nSubj <- length(storms)
 stormsTest <- 6:10
 nTestSubj <- length(stormsTest)
 
-Y <- lapply(storms, \(i) out[i, ])
+Y <- lapply(storms, \(i) as.numeric(out[i, ]))
 X <- lapply(storms, \(i) {
   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
   Xelev <- coords$elev_meters #[indexTrain]
@@ -36,7 +36,7 @@ X <- lapply(storms, \(i) {
 })
 S <- coords[ , 1:2]
 
-YTest <- lapply(stormsTest, \(i) out[i, indexTest])
+YTest <- lapply(stormsTest, \(i) as.numeric(out[i, indexTest]))
 XTest <- lapply(stormsTest, \(i) {
   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
   Xelev <- coords$elev_meters[indexTest]

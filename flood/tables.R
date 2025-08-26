@@ -118,6 +118,8 @@ sketchCRPS <- mean(sapply(1:nTestSubj, function(i) {
   mean(energy_score(truth, preds))
 }))
 
+warnings()
+
 length <- apply(length, 2, mean)
 cvg <- apply(cvg, 2, mean)
 mspe <- apply(mspe, 2, mean)

@@ -25,7 +25,7 @@ library(splitTools) # for stratified splitting
 load("data/flood_data.RData")
 
 # Clusters and seed
-nCores <- 2
+nCores <- 10
 totalCores <- 10
 mySeed <- 856021
 test_subjects <- 6:10
@@ -40,7 +40,7 @@ saveRDS(indexTest, "results/test_points.RDS")
 
 # Divide using train and test indices
 storms <- 1:5
-Y <- lapply(storms, \(i) out[i, ])
+Y <- lapply(storms, \(i) t(out[i, ]))
 X <- lapply(storms, \(i) {
   Xintercept <- rep(1, n)
   Xstorm <- matrix(rep(unlist(inputs[i, ]), n), ncol = 5, byrow = TRUE)
@@ -52,7 +52,7 @@ X <- lapply(storms, \(i) {
 S <- as.matrix(coords[ , 1:2])
 D <- rdist(S)
 
-YTest <- lapply(test_subjects, \(i) out[i, indexTest])
+YTest <- lapply(test_subjects, \(i) t(out[i, indexTest]))
 XTest <- lapply(test_subjects, \(i) {
   Xintercept <- rep(1, nTest)
   Xstorm <- matrix(rep(unlist(inputs[i, ]), nTest), ncol = 5, byrow = TRUE)
